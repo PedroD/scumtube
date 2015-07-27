@@ -61,6 +61,7 @@ public final class ServicesProvider {
 					final String cmd = "youtube-dl "
 							+ "-o " + TEMP_DIR + "%(id)s.%(ext)s "
 							+ "--extract-audio "
+							+ "--write-thumbnail "
 							+ "--audio-format mp3 "
 							+ "--audio-quality 160K "
 							+ "https://www.youtube.com/watch?v="
@@ -74,7 +75,15 @@ public final class ServicesProvider {
 							new Logger().log(Logger.LOG_ERROR, "Could not download " + videoId);
 							new Logger().log(Logger.LOG_ERROR, result);
 						} else {
-							getTemporaryFile().renameTo(new File(FINAL_DIR + getTemporaryFile().getName()));
+							/*
+							 * Move files to final folder
+							 */
+							// Thumbnail
+							final File thumbnailFile = new File(TEMP_DIR + videoId + ".jpg");
+							if (thumbnailFile.exists() && getTemporaryFile().exists()) {
+								getTemporaryFile().renameTo(new File(FINAL_DIR + getTemporaryFile().getName()));
+								thumbnailFile.renameTo(new File(FINAL_DIR + thumbnailFile.getName()));
+							}
 						}
 						synchronized (lock) {
 							if (null == requestsQueue.remove(videoId)) {
@@ -175,6 +184,7 @@ public final class ServicesProvider {
 				if (vr.isMP3FileReady()) {
 					response.put("ready", "The file can be downloaded.");
 					response.put("url", "http://wavedomotics.com/" + videoId + ".mp3");
+					response.put("cover", "http://wavedomotics.com/" + videoId + ".jpg");
 					return response.toString(4);
 				} else {
 					response.put("scheduled", "Wait until the mp3 is cached.");
