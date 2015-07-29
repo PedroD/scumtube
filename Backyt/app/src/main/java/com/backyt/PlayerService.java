@@ -89,7 +89,7 @@ public class PlayerService extends Service {
     public void start() {
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
-            mMediaPlayer.setDataSource(this, Uri.parse("")); //TODO URL
+            mMediaPlayer.setDataSource(this, Uri.parse("http://wavedomotics.com/-SwQr1Xsg9E.mp3")); //TODO URL
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -3,6 +3,7 @@ package com.backyt;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -12,7 +13,9 @@ public class PlayerActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent playerService = new  Intent(PlayerService.ACTION_PLAY, null, this, PlayerService.class);
+        Log.i("VAGINA", PlayerService.class.getName());
+        Intent playerService = new  Intent(this, PlayerService.class);
+        playerService.setAction(PlayerService.ACTION_PLAY);
         startService(playerService);
     }
 

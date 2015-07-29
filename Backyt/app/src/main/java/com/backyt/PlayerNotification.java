@@ -7,7 +7,7 @@ import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
 
 /**
- * Created by André on 27/07/2015.
+ * Created by Andre on 27/07/2015.
  */
 public class PlayerNotification extends Notification {
 
