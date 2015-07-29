@@ -57,6 +57,7 @@ public class PlayerService extends Service {
 
     private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
 
+    private String mVideoTitle;
 
     public PlayerService() {
     }
@@ -140,13 +141,8 @@ public class PlayerService extends Service {
             }
             mSmallNotificationView
                     .setTextViewText(R.id.notification_small_textview, APP_NAME);
-            if (TextUtils.isEmpty(albumName)) {
-                mSmallNotificationView
-                        .setTextViewText(R.id.notification_small_textview2, artistName);
-            } else {
-                mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
-                        artistName + " - " + albumName);
-            }
+            mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
+                    mVideoTitle);
             if (isPlaying()) {
                 mSmallNotificationView
                         .setImageViewResource(R.id.notification_small_imageview_playpause,
@@ -200,15 +196,6 @@ public class PlayerService extends Service {
                     mLargeNotificationView
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
                                     R.drawable.ic_player_play_light);
-                }
-                if (DatabaseHelper.getInstance().isItemLoved(getCurrentQuery())) {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_favorite,
-                                    R.drawable.ic_action_favorites_underlined);
-                } else {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_favorite,
-                                    R.drawable.ic_action_favorites);
                 }
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_previous,
