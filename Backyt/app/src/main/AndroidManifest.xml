@@ -25,10 +25,6 @@
             android:exported="true" >
         </service>
 
-        <activity
-            android:name=".NotificationReturnSlot"
-            android:label="@string/title_activity_notification_return_slot" >
-        </activity>
     </application>
 
 </manifest>
