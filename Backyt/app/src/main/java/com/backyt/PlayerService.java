@@ -35,13 +35,7 @@ public class PlayerService extends Service {
     public static final String ACTION_EXIT
             = "com.backyt.ACTION_EXIT";
 
-    private static final int PLAYBACKSERVICE_PLAYSTATE_PLAYING = 0;
-
-    private static final int PLAYBACKSERVICE_PLAYSTATE_PAUSED = 1;
-
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
-
-    private int mPlayState = PLAYBACKSERVICE_PLAYSTATE_PLAYING;
 
     private boolean mShowingNotification;
 
@@ -105,7 +99,7 @@ public class PlayerService extends Service {
     }
 
     public void pause() {
-
+        mMediaPlayer.pause();
     }
 
     public void pause(boolean b) {
@@ -113,7 +107,12 @@ public class PlayerService extends Service {
     }
 
     public void playPause() {
-
+        if (mMediaPlayer.isPlaying()) {
+            pause();
+        } else {
+            mMediaPlayer.start();
+        }
+        updateNotification();
     }
 
     public void updateNotification() {
@@ -141,7 +140,7 @@ public class PlayerService extends Service {
                     .setTextViewText(R.id.notification_small_textview, APP_NAME);
             mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
                     mVideoTitle);
-            if (isPlaying()) {
+            if (mMediaPlayer.isPlaying()) {
                 mSmallNotificationView
                         .setImageViewResource(R.id.notification_small_imageview_playpause,
                                 R.drawable.ic_player_pause_light);
@@ -172,7 +171,7 @@ public class PlayerService extends Service {
                         APP_NAME);
                 mLargeNotificationView
                         .setTextViewText(R.id.notification_large_textview2, mVideoTitle);
-                if (isPlaying()) {
+                if (mMediaPlayer.isPlaying()) {
                     mLargeNotificationView
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
                                     R.drawable.ic_player_pause_light);
@@ -225,7 +224,7 @@ public class PlayerService extends Service {
         public void onCallStateChanged(int state, String incomingNumber) {
             switch (state) {
                 case TelephonyManager.CALL_STATE_RINGING:
-                    if (isPlaying()) {
+                    if (mMediaPlayer.isPlaying()) {
                         mStartCallTime = System.currentTimeMillis();
                         pause();
                     }
@@ -241,9 +240,5 @@ public class PlayerService extends Service {
                     break;
             }
         }
-    }
-
-    public boolean isPlaying() {
-        return mPlayState == PLAYBACKSERVICE_PLAYSTATE_PLAYING;
     }
 }
