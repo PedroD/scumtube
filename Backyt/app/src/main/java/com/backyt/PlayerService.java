@@ -6,17 +6,13 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.media.Image;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 import android.widget.RemoteViews;
 
 import java.io.IOException;
@@ -42,6 +38,8 @@ public class PlayerService extends Service {
     private static final int PLAYBACKSERVICE_PLAYSTATE_PLAYING = 0;
 
     private static final int PLAYBACKSERVICE_PLAYSTATE_PAUSED = 1;
+
+    private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
 
     private int mPlayState = PLAYBACKSERVICE_PLAYSTATE_PLAYING;
 
@@ -156,26 +154,14 @@ public class PlayerService extends Service {
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                             playPausePendingIntent);
             mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_next,
-                            nextPendingIntent);
-            mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_exit,
                             exitPendingIntent);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
-                    PlaybackService.this)
-                    .setSmallIcon(R.drawable.ic_notification).setContentTitle(artistName)
-                    .setContentText(getCurrentQuery().getName()).setOngoing(true).setPriority(
+                    PlayerService.this)
+                    .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
+                    .setContentText(mVideoTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
-
-            Intent notificationIntent = new Intent(PlaybackService.this,
-                    TomahawkMainActivity.class);
-            intent.setAction(TomahawkMainActivity.SHOW_PLAYBACKFRAGMENT_ON_STARTUP);
-            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent resultPendingIntent = PendingIntent
-                    .getActivity(PlaybackService.this, 0, notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-            builder.setContentIntent(resultPendingIntent);
 
             mNotification = builder.build();
 
@@ -183,11 +169,9 @@ public class PlayerService extends Service {
                 mLargeNotificationView = new RemoteViews(getPackageName(),
                         R.layout.notification_large);
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
-                        getCurrentQuery().getName());
+                        APP_NAME);
                 mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview2, artistName);
-                mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview3, albumName);
+                        .setTextViewText(R.id.notification_large_textview2, mVideoTitle);
                 if (isPlaying()) {
                     mLargeNotificationView
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
@@ -198,23 +182,14 @@ public class PlayerService extends Service {
                                     R.drawable.ic_player_play_light);
                 }
                 mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_previous,
-                                previousPendingIntent);
-                mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
                                 playPausePendingIntent);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_next,
-                                nextPendingIntent);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_favorite,
-                                favoritePendingIntent);
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_exit,
                                 exitPendingIntent);
                 mNotification.bigContentView = mLargeNotificationView;
 
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                /*new Handler(Looper.getMainLooper()).post(new Runnable() {
                     @Override
                     public void run() {
                         TomahawkUtils.loadImageIntoNotification(TomahawkApp.getContext(),
@@ -230,9 +205,9 @@ public class PlayerService extends Service {
                                 mNotification, Image.getSmallImageSize(),
                                 getCurrentQuery().hasArtistImage());
                     }
-                });
+                });*/
             }
-            startForeground(PLAYBACKSERVICE_NOTIFICATION_ID, mNotification);
+            startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.backyt;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -11,7 +12,8 @@ public class PlayerActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        showNotification();
+        Intent playerService = new  Intent(PlayerService.ACTION_PLAY, null, this, PlayerService.class);
+        startService(playerService);
     }
 
     public void showNotification(){

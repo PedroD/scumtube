@@ -59,18 +59,6 @@
               android:textColor="@color/secondary_textcolor_inverted"
               android:textSize="@dimen/text_size_small"/>
 
-    <TextView android:id="@+id/notification_large_textview3"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:paddingLeft="@dimen/padding_small"
-              android:paddingRight="@dimen/padding_small"
-              android:paddingBottom="@dimen/padding_small"
-              android:layout_toRightOf="@id/notification_large_imageview_albumart"
-              android:layout_below="@id/notification_large_textview2"
-              android:singleLine="true"
-              android:textColor="@color/secondary_textcolor_inverted"
-              android:textSize="@dimen/text_size_small"/>
-
     <LinearLayout android:id="@+id/notification_large_linearlayout_buttons"
                   android:layout_width="match_parent"
                   android:layout_height="48dp"
