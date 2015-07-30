@@ -13,6 +13,11 @@ public class PlayerActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (getIntent().getExtras() != null){
+            Bundle extras = getIntent().getExtras();
+            String value1 = extras.getString(Intent.EXTRA_TEXT);
+            Log.i("CONA", value1);
+        }
         Log.i("VAGINA", PlayerService.class.getName());
         Intent playerService = new  Intent(this, PlayerService.class);
         playerService.setAction(PlayerService.ACTION_PLAY);
