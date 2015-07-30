@@ -56,7 +56,15 @@
             android:paddingBottom="@dimen/padding_large"
             android:src="@drawable/ic_player_play_light"
             android:background="@drawable/selectable_background_tomahawk"/>
-
+    <ImageView
+        android:id="@+id/notification_small_imageview_loop"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_weight="1"
+        android:paddingTop="@dimen/padding_large"
+        android:paddingBottom="@dimen/padding_large"
+        android:src="@drawable/ic_player_loop_off_light"
+        android:background="@drawable/selectable_background_tomahawk"/>
     <ImageView
             android:id="@+id/notification_small_imageview_exit"
             android:layout_height="match_parent"
@@ -66,4 +74,5 @@
             android:paddingBottom="@dimen/padding_large"
             android:src="@drawable/ic_player_exit_light"
             android:background="@drawable/selectable_background_tomahawk"/>
+
 </LinearLayout>

@@ -9,13 +9,16 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 import java.io.IOException;
+import java.util.Set;
 
 
 public class PlayerService extends Service {
@@ -34,6 +37,9 @@ public class PlayerService extends Service {
 
     public static final String ACTION_EXIT
             = "com.backyt.ACTION_EXIT";
+
+    public static final String ACTION_LOOP
+            = "com.backyt.ACTION_LOOP";
 
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
 
@@ -62,6 +68,13 @@ public class PlayerService extends Service {
         TelephonyManager telephonyManager =
                 (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(mPhoneCallListener, PhoneStateListener.LISTEN_CALL_STATE);
+
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                updateNotification();
+            }
+        });
     }
 
     @Override
@@ -73,9 +86,19 @@ public class PlayerService extends Service {
                 start();
             } else if (intent.getAction().equals(ACTION_PAUSE)) {
                 pause();
+            } else if (intent.getAction().equals(ACTION_LOOP)){
+                loop();
             } else if (intent.getAction().equals(ACTION_EXIT)) {
                 pause(true);
             }
+        }
+        if(intent.getAction().equals(Intent.ACTION_SEND)) {
+            Bundle b = intent.getExtras();
+            Set<String> s = b.keySet();
+            for(String c : s ){
+                Log.i("CONA", c);
+            }
+
         }
         return START_STICKY;
     }
@@ -83,7 +106,7 @@ public class PlayerService extends Service {
     public void start() {
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
-            mMediaPlayer.setDataSource(this, Uri.parse("http://wavedomotics.com/-SwQr1Xsg9E.mp3")); //TODO URL
+            mMediaPlayer.setDataSource(this, Uri.parse("http://wavedomotics.com/VDtsKsnL0x8.mp3")); //TODO URL
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -106,6 +129,11 @@ public class PlayerService extends Service {
 
     }
 
+    public void loop(){
+        mMediaPlayer.setLooping(!mMediaPlayer.isLooping());
+        updateNotification();
+    }
+
     public void playPause() {
         if (mMediaPlayer.isPlaying()) {
             pause();
@@ -121,6 +149,12 @@ public class PlayerService extends Service {
             Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
                     PlayerService.class);
             PendingIntent playPausePendingIntent = PendingIntent
+                    .getService(PlayerService.this, 0, intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+
+            intent = new Intent(ACTION_LOOP, null, PlayerService.this,
+                    PlayerService.class);
+            PendingIntent loopPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -149,9 +183,21 @@ public class PlayerService extends Service {
                         .setImageViewResource(R.id.notification_small_imageview_playpause,
                                 R.drawable.ic_player_play_light);
             }
+            if (mMediaPlayer.isLooping()) {
+                mSmallNotificationView
+                        .setImageViewResource(R.id.notification_small_imageview_loop,
+                                R.drawable.ic_player_loop_on_light);
+            } else {
+                mSmallNotificationView
+                        .setImageViewResource(R.id.notification_small_imageview_loop,
+                                R.drawable.ic_player_loop_off_light);
+            }
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                             playPausePendingIntent);
+            mSmallNotificationView
+                    .setOnClickPendingIntent(R.id.notification_small_imageview_loop,
+                            loopPendingIntent);
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_exit,
                             exitPendingIntent);
@@ -180,9 +226,21 @@ public class PlayerService extends Service {
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
                                     R.drawable.ic_player_play_light);
                 }
+                if (mMediaPlayer.isLooping()) {
+                    mLargeNotificationView
+                            .setImageViewResource(R.id.notification_large_imageview_loop,
+                                    R.drawable.ic_player_loop_on_light);
+                } else {
+                    mLargeNotificationView
+                            .setImageViewResource(R.id.notification_large_imageview_loop,
+                                    R.drawable.ic_player_loop_off_light);
+                }
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
                                 playPausePendingIntent);
+                mLargeNotificationView
+                        .setOnClickPendingIntent(R.id.notification_large_imageview_loop,
+                                loopPendingIntent);
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_exit,
                                 exitPendingIntent);
