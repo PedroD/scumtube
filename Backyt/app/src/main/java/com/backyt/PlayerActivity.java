@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.ExecutionException;
 
 
 public class PlayerActivity extends ActionBarActivity {
@@ -30,13 +31,21 @@ public class PlayerActivity extends ActionBarActivity {
         if (getIntent().getExtras() != null){
             Bundle extras = getIntent().getExtras();
             String ytLink = extras.getString(Intent.EXTRA_TEXT);
-            new RequestMp3().execute(parseVideoId(ytLink));
+            String streamUrl = null;
+            try {
+                streamUrl = new RequestMp3().execute(parseVideoId(ytLink)).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
             Log.i("Youtube", ytLink);
+            Log.i("VAGINA", PlayerService.class.getName());
+            Intent playerService = new  Intent(this, PlayerService.class);
+            playerService.setAction(PlayerService.ACTION_PLAY);
+            playerService.putExtra("streamUrl", streamUrl);
+            startService(playerService);
         }
-        Log.i("VAGINA", PlayerService.class.getName());
-        Intent playerService = new  Intent(this, PlayerService.class);
-        playerService.setAction(PlayerService.ACTION_PLAY);
-        startService(playerService);
     }
 
     private String parseVideoId(String url){
@@ -74,7 +83,7 @@ public class PlayerActivity extends ActionBarActivity {
                             break;
                         }
                         Log.i("Pedido", jsonObject.getString("scheduled"));
-                        Thread.sleep(10000);
+                        Thread.sleep(5000);
                     }
                 }
                 Log.i("Pedido", jsonObject.getString("url"));

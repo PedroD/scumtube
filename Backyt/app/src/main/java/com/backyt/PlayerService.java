@@ -54,6 +54,8 @@ public class PlayerService extends Service {
 
     private String mVideoTitle;
 
+    private String streamUrl;
+
     public PlayerService() {
     }
 
@@ -72,10 +74,15 @@ public class PlayerService extends Service {
                 updateNotification();
             }
         });
+
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent.getExtras() != null){
+           streamUrl = intent.getExtras().getString("streamUrl");
+        }
         if (intent != null && intent.getAction() != null) {
             if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
                 playPause();
@@ -95,7 +102,8 @@ public class PlayerService extends Service {
     public void start() {
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
-            mMediaPlayer.setDataSource(this, Uri.parse("http://wavedomotics.com/VDtsKsnL0x8.mp3")); //TODO URL
+            mMediaPlayer.reset();
+            mMediaPlayer.setDataSource(this, Uri.parse(streamUrl)); //TODO URL
         } catch (IOException e) {
             e.printStackTrace();
         }
