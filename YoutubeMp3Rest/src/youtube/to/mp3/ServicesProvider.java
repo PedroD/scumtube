@@ -26,6 +26,7 @@ public final class ServicesProvider {
 	private static final int MAX_MINUTES_STORING_ABORTED_REQUEST = 120;
 	private static final int MAX_MUSIC_DURATION = 10;
 	private static final int MAX_RETRIES = 3;
+	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 3;
 
 	private static final String TEMP_DIR = "tmp/";
 
@@ -33,6 +34,7 @@ public final class ServicesProvider {
 		private static final Map<String, VideoRequest> abortedRequests = new HashMap<String, VideoRequest>();
 		private static final Object lock = new Object();
 		private static final Map<String, VideoRequest> requestsQueue = new HashMap<String, VideoRequest>();
+		private static final Semaphore simultaneousDownloads = new Semaphore(MAX_SIMULTANEOUS_DOWNLOADS);
 
 		private boolean aborted = false;
 
@@ -104,8 +106,15 @@ public final class ServicesProvider {
 						new Thread() {
 							@Override
 							public void run() {
-								VideoRequest.this.download();
-								new Logger().log(Logger.LOG_INFO, "Finished preparing " + videoId);
+								try {
+									simultaneousDownloads.acquire();
+									new Logger().log(Logger.LOG_INFO, "Preparing video " + videoId);
+									VideoRequest.this.download();
+									simultaneousDownloads.release();
+									new Logger().log(Logger.LOG_INFO, "Finished preparing " + videoId);
+								} catch (InterruptedException e) {
+									e.printStackTrace();
+								}
 							}
 						}.start();
 					}
