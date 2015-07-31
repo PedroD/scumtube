@@ -9,16 +9,13 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import java.io.IOException;
-import java.util.Set;
 
 
 public class PlayerService extends Service {
@@ -91,14 +88,6 @@ public class PlayerService extends Service {
             } else if (intent.getAction().equals(ACTION_EXIT)) {
                 pause(true);
             }
-        }
-        if(intent.getAction().equals(Intent.ACTION_SEND)) {
-            Bundle b = intent.getExtras();
-            Set<String> s = b.keySet();
-            for(String c : s ){
-                Log.i("CONA", c);
-            }
-
         }
         return START_STICKY;
     }
