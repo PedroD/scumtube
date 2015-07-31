@@ -88,12 +88,10 @@ public class PlayerService extends Service {
                 playPause();
             } else if (intent.getAction().equals(ACTION_PLAY)) {
                 start();
-            } else if (intent.getAction().equals(ACTION_PAUSE)) {
-                pause();
             } else if (intent.getAction().equals(ACTION_LOOP)){
                 loop();
             } else if (intent.getAction().equals(ACTION_EXIT)) {
-                pause(true);
+                exit();
             }
         }
         return START_STICKY;
@@ -122,8 +120,9 @@ public class PlayerService extends Service {
         mMediaPlayer.pause();
     }
 
-    public void pause(boolean b) {
-
+    public void exit() {
+        mMediaPlayer.stop();
+        stopSelf();
     }
 
     public void loop(){

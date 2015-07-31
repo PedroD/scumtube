@@ -45,7 +45,9 @@ public class PlayerActivity extends ActionBarActivity {
             playerService.setAction(PlayerService.ACTION_PLAY);
             playerService.putExtra("streamUrl", streamUrl);
             startService(playerService);
+
         }
+        finish();
     }
 
     private String parseVideoId(String url){
