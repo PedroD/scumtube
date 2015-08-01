@@ -71,8 +71,10 @@ public final class ServicesProvider {
 						for (Map.Entry<String, VideoRequest> vr : abortedRequests.entrySet()) {
 							final long delta = TimeUnit.MILLISECONDS
 									.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
-							if (delta >= MAX_MINUTES_STORING_ABORTED_REQUEST)
+							if (delta >= MAX_MINUTES_STORING_ABORTED_REQUEST) {
 								toRemove.add(vr.getKey());
+								new Logger().log(Logger.LOG_INFO, "Removed old aborted request " + vr.getKey() + ".");
+							}
 						}
 						for (String v : toRemove) {
 							abortedRequests.remove(v);
@@ -152,7 +154,7 @@ public final class ServicesProvider {
 					boolean downloadSuccessfull = false;
 					if (getMetadata()) {
 						if (duration >= MAX_MUSIC_DURATION) {
-							abortRequest("Could not download " + videoId + ", it exceeds " + MAX_MUSIC_DURATION + " minutes.");
+							abortRequest("Could not download video because it exceeds " + MAX_MUSIC_DURATION + " minutes.");
 							sem.release();
 							return;
 						}
@@ -249,8 +251,12 @@ public final class ServicesProvider {
 						+ videoId;
 				final String metadataResult = executeCommand(metadataCmd);
 				final String[] tokens = metadataResult.split("\n");
+				final String[] durationTokens = tokens[1].split(":");
 				this.title = tokens[0];
-				this.duration = Integer.parseInt(tokens[1].split(":")[0]);
+				if (durationTokens.length == 2)
+					this.duration = Integer.parseInt(durationTokens[0]);
+				else
+					this.duration = MAX_MUSIC_DURATION + 1;
 				return true;
 			} catch (Exception e) {
 				abortRequest(e.getMessage() + " Is the video id correct?");
