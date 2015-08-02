@@ -6,6 +6,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -36,6 +37,8 @@ public class PlayerService extends Service {
 
     public static final String APP_NAME
             = "Backyt";
+
+    public static final String TAG = "BackytLOG";
 
     public static final String ACTION_PLAYPAUSE
             = "com.backyt.ACTION_PLAYPAUSE";
@@ -92,7 +95,7 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent.getExtras() != null){
+        if (intent.getExtras() != null) {
             String ytUrl = intent.getExtras().getString("ytUrl");
             try {
                 streamUrl = new RequestMp3().execute(parseVideoId(ytUrl)).get();
@@ -107,7 +110,7 @@ public class PlayerService extends Service {
                 playPause();
             } else if (intent.getAction().equals(ACTION_PLAY)) {
                 start();
-            } else if (intent.getAction().equals(ACTION_LOOP)){
+            } else if (intent.getAction().equals(ACTION_LOOP)) {
                 loop();
             } else if (intent.getAction().equals(ACTION_EXIT)) {
                 exit();
@@ -116,8 +119,8 @@ public class PlayerService extends Service {
         return START_STICKY;
     }
 
-    private String parseVideoId(String url){
-        String [] splittedUrl = url.split("/");
+    private String parseVideoId(String url) {
+        String[] splittedUrl = url.split("/");
         return splittedUrl[3]; //splittedUrl[3] is the id of the video
     }
 
@@ -128,12 +131,12 @@ public class PlayerService extends Service {
             String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId[0];
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
-            try{
+            try {
                 JSONObject jsonObject;
-                while(true){
+                while (true) {
                     HttpResponse httpResponse = httpClient.execute(httpGet);
                     HttpEntity httpEntity = httpResponse.getEntity();
-                    if(httpEntity != null) {
+                    if (httpEntity != null) {
                         InputStream inputStream = httpEntity.getContent();
 
                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -147,7 +150,7 @@ public class PlayerService extends Service {
                         bufferedReader.close();
 
                         jsonObject = new JSONObject(stringBuilder.toString());
-                        if(jsonObject.has("ready")){
+                        if (jsonObject.has("ready")) {
                             break;
                         }
                         Log.i("Pedido", jsonObject.getString("scheduled"));
@@ -157,8 +160,8 @@ public class PlayerService extends Service {
                 Log.i("Pedido", jsonObject.getString("url"));
                 return jsonObject.getString("url");
 
-            } catch (IOException e){
-            } catch (JSONException e){
+            } catch (IOException e) {
+            } catch (JSONException e) {
             } catch (InterruptedException e) {
             }
             return "";
@@ -182,10 +185,69 @@ public class PlayerService extends Service {
 
         mShowingNotification = true;
         updateNotification();
+
+        /*
+         * Detect when videos start playing in the background to lower or stop the music.
+         */
+        final AudioManager am = (AudioManager) getApplicationContext()
+                .getSystemService(Context.AUDIO_SERVICE);
+        // Request audio focus for play back
+        final int result = am.requestAudioFocus(new AudioManagerListener(),
+                // Use the music stream.
+                AudioManager.STREAM_MUSIC,
+                // Request permanent focus.
+                AudioManager.AUDIOFOCUS_GAIN);
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            // take appropriate action
+        } else if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+            // take appropriate error action
+        }
     }
+
+    private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {
+
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            switch (focusChange) {
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN");
+                    // Set volume level to desired levels
+                    doubleVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                    // Set volume level to desired levels
+                    doubleVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                    // Set volume level to desired levels
+                    doubleVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS");
+                    // Lower the volume
+                    halveVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                    // Lower the volume
+                    halveVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                    // Lower the volume
+                    halveVolume();
+                    break;
+            }
+        }
+    }
+
+    ;
 
     public void pause() {
         mMediaPlayer.pause();
+        updateNotification();
     }
 
     public void exit() {
@@ -193,7 +255,7 @@ public class PlayerService extends Service {
         stopSelf();
     }
 
-    public void loop(){
+    public void loop() {
         mMediaPlayer.setLooping(!mMediaPlayer.isLooping());
         updateNotification();
     }
@@ -205,6 +267,29 @@ public class PlayerService extends Service {
             mMediaPlayer.start();
         }
         updateNotification();
+    }
+
+    public void play() {
+        if (!mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+            updateNotification();
+        }
+    }
+
+    private boolean isVolumeHalved = false;
+
+    public void halveVolume() {
+        if(!isVolumeHalved) {
+            mMediaPlayer.setVolume(0.1f, 0.1f);
+            isVolumeHalved = true;
+        }
+    }
+
+    public void doubleVolume() {
+        if(isVolumeHalved) {
+            mMediaPlayer.setVolume(1f, 1f);
+            isVolumeHalved = false;
+        }
     }
 
     public void updateNotification() {
