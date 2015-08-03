@@ -22,14 +22,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutionException;
 
 
 public class PlayerService extends Service {
@@ -80,14 +78,9 @@ public class PlayerService extends Service {
         if (intent.getExtras() != null) {
             createLoadingNotification();
             String ytUrl = intent.getExtras().getString("ytUrl");
-            try {
-                streamUrl = new RequestMp3().execute(parseVideoId(ytUrl)).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+            new RequestMp3().execute(parseVideoId(ytUrl));
         }
+
         if (intent != null && intent.getAction() != null) {
             if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
                 playPause();
@@ -371,10 +364,10 @@ public class PlayerService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    class RequestMp3 extends AsyncTask<String, Void, String> {
+    class RequestMp3 extends AsyncTask<String, Void, Void> {
 
         @Override
-        protected String doInBackground(String... videoId) {
+        protected Void doInBackground(String... videoId) {
             String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId[0];
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
@@ -406,12 +399,13 @@ public class PlayerService extends Service {
                     }
                 }
                 Log.i(TAG, jsonObject.getString("url"));
-                return jsonObject.getString("url");
+                streamUrl = jsonObject.getString("url");
+                start();
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return "";
+            return null;
         }
     }
 
