@@ -61,7 +61,7 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        
+
         // Initialize PhoneCallListener
         TelephonyManager telephonyManager =
                 (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -378,6 +378,7 @@ public class PlayerService extends Service {
             String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId[0];
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
+            Log.i(TAG, "Requesting music " + requestUrl);
             try {
                 JSONObject jsonObject;
                 while (true) {
@@ -400,16 +401,15 @@ public class PlayerService extends Service {
                         if (jsonObject.has("ready")) {
                             break;
                         }
-                        Log.i("Pedido", jsonObject.getString("scheduled"));
+                        Log.i(TAG, jsonObject.getString("scheduled"));
                         Thread.sleep(5000);
                     }
                 }
-                Log.i("Pedido", jsonObject.getString("url"));
+                Log.i(TAG, jsonObject.getString("url"));
                 return jsonObject.getString("url");
 
-            } catch (IOException e) {
-            } catch (JSONException e) {
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return "";
         }
