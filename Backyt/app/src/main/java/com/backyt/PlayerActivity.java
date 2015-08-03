@@ -14,7 +14,7 @@ public class PlayerActivity extends Activity {
         if (getIntent().getExtras() != null) {
             final Bundle extras = getIntent().getExtras();
             final String ytUrl = extras.getString(Intent.EXTRA_TEXT);
-            if (ytUrl.contains("youtube.com")) {
+            if (ytUrl.contains("http")) {
                 final Intent playerService = new Intent(this, PlayerService.class);
                 playerService.setAction(PlayerService.ACTION_PLAY);
                 playerService.putExtra("ytUrl", ytUrl);
@@ -22,6 +22,8 @@ public class PlayerActivity extends Activity {
             } else {
                 Toast.makeText(getApplicationContext(), "Error: Wrong URL (" + ytUrl + ")!", Toast.LENGTH_LONG).show();
             }
+        } else {
+            Toast.makeText(getApplicationContext(), "An error occurred!", Toast.LENGTH_LONG).show();
         }
         finish();
     }

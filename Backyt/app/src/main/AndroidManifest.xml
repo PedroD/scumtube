@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.backyt">
+<manifest package="com.backyt"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application
         android:allowBackup="true"
@@ -14,16 +14,15 @@
             android:name=".PlayerActivity"
             android:label="@string/app_name">
             <intent-filter>
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
 
-                <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.SEND"/>
 
                 <data
                     android:host="www.youtube.com"
-                    android:mimeType="text/*"
-                    android:scheme="http" />
+                    android:mimeType="text/*"/>
             </intent-filter>
         </activity>
 
@@ -32,11 +31,11 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.backyt.ACTION_PLAYPAUSE" />
-                <action android:name="com.backyt.ACTION_PLAY" />
-                <action android:name="com.backyt.ACTION_PAUSE" />
-                <action android:name="com.backyt.ACTION_LOOP" />
-                <action android:name="com.backyt.ACTION_EXIT" />
+                <action android:name="com.backyt.ACTION_PLAYPAUSE"/>
+                <action android:name="com.backyt.ACTION_PLAY"/>
+                <action android:name="com.backyt.ACTION_PAUSE"/>
+                <action android:name="com.backyt.ACTION_LOOP"/>
+                <action android:name="com.backyt.ACTION_EXIT"/>
             </intent-filter>
         </service>
 
