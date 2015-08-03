@@ -40,9 +40,10 @@
         android:layout_toLeftOf="@id/notification_large_imageview_exit"
         android:layout_toRightOf="@id/notification_large_imageview_albumart"
         android:paddingLeft="@dimen/padding_small"
-        android:singleLine="true"
+        android:lines="2"
         android:textColor="@color/secondary_textcolor_inverted"
-        android:textSize="@dimen/text_size_small"/>
+        android:textSize="@dimen/text_size_small">
+    </TextView>
 
     <LinearLayout
         android:id="@+id/notification_large_linearlayout_buttons"

@@ -17,6 +17,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
@@ -55,7 +56,6 @@ public class PlayerService extends Service {
     private RemoteViews mSmallLoadingNotificationView;
     private MediaPlayer mMediaPlayer = new MediaPlayer();
     private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
-    private String mVideoTitle;
 
     public PlayerService() {
     }
@@ -79,19 +79,19 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, intent + "");
+        Log.i(TAG, "On start command invoked: " + intent);
         if (intent.getExtras() != null) {
             createLoadingNotification();
             final String ytUrl = parseVideoId(intent.getExtras().getString("ytUrl"));
             final Thread downloadTask = new RequestMp3Task(ytUrl);
             downloadTask.start();
-        } else if (intent != null && intent.getAction().equals(ACTION_PLAYPAUSE)) {
+        } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
             playPause();
-        } else if (intent != null && intent.getAction().equals(ACTION_PLAY)) {
+        } else if (intent.getAction().equals(ACTION_PLAY)) {
             start();
-        } else if (intent != null && intent.getAction().equals(ACTION_LOOP)) {
+        } else if (intent.getAction().equals(ACTION_LOOP)) {
             loop();
-        } else if (intent != null && intent.getAction().equals(ACTION_EXIT)) {
+        } else if (intent.getAction().equals(ACTION_EXIT)) {
             exit();
         } else {
             Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
@@ -111,13 +111,11 @@ public class PlayerService extends Service {
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setDataSource(this, Uri.parse(streamMp3Url)); //TODO URL
         } catch (Exception e) {
-            Log.i(TAG, "ERRO FILENOTFUND " + streamMp3Url);
             e.printStackTrace();
         }
         try {
             mMediaPlayer.prepare(); // might take long! (for buffering, etc)
         } catch (IOException e) {
-            Log.i(TAG, "ERRO FILENOTFUND 2 " + streamMp3Url);
             e.printStackTrace();
         }
         mMediaPlayer.start();
@@ -137,9 +135,9 @@ public class PlayerService extends Service {
                 // Request permanent focus.
                 AudioManager.AUDIOFOCUS_GAIN);
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            // take appropriate action
+            // TODO: take appropriate action
         } else if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-            // take appropriate error action
+            // TODO: take appropriate error action
         }
     }
 
@@ -199,12 +197,12 @@ public class PlayerService extends Service {
                 .setContent(mSmallLoadingNotificationView);
 
         mNotification = builder.build();
+
         startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
 
     public void updateNotification() {
         if (mShowingNotification) {
-
             Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
                     PlayerService.class);
             PendingIntent playPausePendingIntent = PendingIntent
@@ -232,7 +230,7 @@ public class PlayerService extends Service {
             mSmallNotificationView
                     .setTextViewText(R.id.notification_small_textview, APP_NAME);
             mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
-                    mVideoTitle);
+                    streamTitle);
             if (mMediaPlayer.isPlaying()) {
                 mSmallNotificationView
                         .setImageViewResource(R.id.notification_small_imageview_playpause,
@@ -264,7 +262,7 @@ public class PlayerService extends Service {
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
                     .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
-                    .setContentText(mVideoTitle).setOngoing(true).setPriority(
+                    .setContentText(streamTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
 
             mNotification = builder.build();
@@ -275,7 +273,7 @@ public class PlayerService extends Service {
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
                         APP_NAME);
                 mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview2, mVideoTitle);
+                        .setTextViewText(R.id.notification_large_textview2, streamTitle);
                 if (mMediaPlayer.isPlaying()) {
                     mLargeNotificationView
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
