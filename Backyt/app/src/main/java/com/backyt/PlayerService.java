@@ -37,7 +37,8 @@ public class PlayerService extends Service {
     public static final String APP_NAME
             = "Backyt";
 
-    public static final String TAG = "BackytLOG";
+    public static final String TAG
+            = "BackytLOG";
 
     public static final String ACTION_PLAYPAUSE
             = "com.backyt.ACTION_PLAYPAUSE";
@@ -80,7 +81,6 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-       createLoadingNotification();
 
         // Initialize PhoneCallListener
         TelephonyManager telephonyManager =
@@ -98,6 +98,7 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getExtras() != null) {
+            createLoadingNotification();
             String ytUrl = intent.getExtras().getString("ytUrl");
             try {
                 streamUrl = new RequestMp3().execute(parseVideoId(ytUrl)).get();
@@ -171,9 +172,9 @@ public class PlayerService extends Service {
     }
 
     public void start() {
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
             mMediaPlayer.reset();
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setDataSource(this, Uri.parse(streamUrl)); //TODO URL
         } catch (IOException e) {
             e.printStackTrace();
@@ -244,8 +245,6 @@ public class PlayerService extends Service {
             }
         }
     }
-
-    ;
 
     public void pause() {
         mMediaPlayer.pause();
