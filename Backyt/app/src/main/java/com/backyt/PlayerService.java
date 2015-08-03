@@ -6,7 +6,6 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.media.AudioManager.OnAudioFocusChangeListener;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -65,6 +64,8 @@ public class PlayerService extends Service {
 
     private RemoteViews mLargeNotificationView;
 
+    private RemoteViews mSmallLoadingNotificationView;
+
     private MediaPlayer mMediaPlayer = new MediaPlayer();
 
     private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
@@ -79,6 +80,7 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+       createLoadingNotification();
 
         // Initialize PhoneCallListener
         TelephonyManager telephonyManager =
@@ -290,6 +292,19 @@ public class PlayerService extends Service {
             mMediaPlayer.setVolume(1f, 1f);
             isVolumeHalved = false;
         }
+    }
+
+    public void createLoadingNotification(){
+        mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading_small);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                PlayerService.this)
+                .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
+                .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
+                .setContent(mSmallLoadingNotificationView);
+
+        mNotification = builder.build();
+        startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
 
     public void updateNotification() {
