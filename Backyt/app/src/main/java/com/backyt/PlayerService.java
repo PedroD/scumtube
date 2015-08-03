@@ -8,28 +8,28 @@ import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.ExecutionException;
 
 
 public class PlayerService extends Service {
@@ -77,27 +77,23 @@ public class PlayerService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, intent + "");
         if (intent.getExtras() != null) {
             createLoadingNotification();
-            String ytUrl = intent.getExtras().getString("ytUrl");
-            try {
-                streamUrl = new RequestMp3().execute(parseVideoId(ytUrl)).get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-        if (intent != null && intent.getAction() != null) {
-            if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
-                playPause();
-            } else if (intent.getAction().equals(ACTION_PLAY)) {
-                start();
-            } else if (intent.getAction().equals(ACTION_LOOP)) {
-                loop();
-            } else if (intent.getAction().equals(ACTION_EXIT)) {
-                exit();
-            }
+            final String ytUrl = parseVideoId(intent.getExtras().getString("ytUrl"));
+            final Thread downloadTask = new RequestMp3Task(ytUrl);
+            downloadTask.start();
+        } else if (intent != null && intent.getAction().equals(ACTION_PLAYPAUSE)) {
+            playPause();
+        } else if (intent != null && intent.getAction().equals(ACTION_PLAY)) {
+            start();
+        } else if (intent != null && intent.getAction().equals(ACTION_LOOP)) {
+            loop();
+        } else if (intent != null && intent.getAction().equals(ACTION_EXIT)) {
+            exit();
+        } else {
+            Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
+            return START_NOT_STICKY;
         }
         return START_STICKY;
     }
@@ -112,12 +108,14 @@ public class PlayerService extends Service {
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mMediaPlayer.setDataSource(this, Uri.parse(streamUrl)); //TODO URL
-        } catch (IOException e) {
+        } catch (Exception e) {
+            Log.i(TAG, "ERRO FILENOTFUND " + streamUrl);
             e.printStackTrace();
         }
         try {
             mMediaPlayer.prepare(); // might take long! (for buffering, etc)
         } catch (IOException e) {
+            Log.i(TAG, "ERRO FILENOTFUND 2 " + streamUrl);
             e.printStackTrace();
         }
         mMediaPlayer.start();
@@ -372,11 +370,17 @@ public class PlayerService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    class RequestMp3 extends AsyncTask<String, Void, String> {
+    class RequestMp3Task extends Thread {
+
+        private final String videoId;
+
+        public RequestMp3Task(String videoId) {
+            this.videoId = videoId;
+        }
 
         @Override
-        protected String doInBackground(String... videoId) {
-            String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId[0];
+        public void run() {
+            String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId;
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
             Log.i(TAG, "Requesting music " + requestUrl);
@@ -403,16 +407,15 @@ public class PlayerService extends Service {
                             break;
                         }
                         Log.i(TAG, jsonObject.getString("scheduled"));
-                        Thread.sleep(5000);
+                        Thread.sleep(10000);
                     }
                 }
-                Log.i(TAG, jsonObject.getString("url"));
-                return jsonObject.getString("url");
-
+                streamUrl = jsonObject.getString("url");
+                Log.i(TAG, streamUrl);
+                PlayerService.this.start();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            return "";
         }
     }
 

@@ -14,9 +14,8 @@ public class PlayerActivity extends Activity {
         if (getIntent().getExtras() != null) {
             final Bundle extras = getIntent().getExtras();
             final String ytUrl = extras.getString(Intent.EXTRA_TEXT);
-            if (ytUrl.contains("http")) {
+            if (ytUrl != null && ytUrl.contains("http")) {
                 final Intent playerService = new Intent(this, PlayerService.class);
-                playerService.setAction(PlayerService.ACTION_PLAY);
                 playerService.putExtra("ytUrl", ytUrl);
                 startService(playerService);
             } else {
