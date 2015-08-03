@@ -416,45 +416,6 @@ public class PlayerService extends Service {
         }
     }
 
-    private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {
-
-        @Override
-        public void onAudioFocusChange(int focusChange) {
-            switch (focusChange) {
-                case AudioManager.AUDIOFOCUS_GAIN:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS");
-                    // Lower the volume
-                    pause();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
-                    // Lower the volume
-                    halveVolume();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
-                    // Lower the volume
-                    halveVolume();
-                    break;
-            }
-        }
-    }
-
     private class PhoneCallListener extends PhoneStateListener {
 
         private long mStartCallTime = 0L;
