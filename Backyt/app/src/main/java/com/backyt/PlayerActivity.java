@@ -20,6 +20,7 @@ public class PlayerActivity extends ActionBarActivity {
             playerService.putExtra("ytUrl", ytUrl);
             startService(playerService);
         }
+        moveTaskToBack(true);
     }
 
     @Override
