@@ -34,8 +34,16 @@ import java.util.concurrent.ExecutionException;
 
 public class PlayerService extends Service {
 
+<<<<<<< HEAD
+    public static final String APP_NAME
+            = "Backyt";
+
+    public static final String TAG
+            = "BackytLOG";
+=======
     public static final String APP_NAME = "Backyt";
     public static final String TAG = "BackytLOG";
+>>>>>>> 3a649f36f441ee7df5ac8e945085d2ee51fb05c2
 
     public static final String ACTION_PLAYPAUSE = "com.backyt.ACTION_PLAYPAUSE";
     public static final String ACTION_PLAY = "com.backyt.ACTION_PLAY";
@@ -61,7 +69,10 @@ public class PlayerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+<<<<<<< HEAD
+=======
         createLoadingNotification();
+>>>>>>> 3a649f36f441ee7df5ac8e945085d2ee51fb05c2
 
         // Initialize PhoneCallListener
         TelephonyManager telephonyManager =
@@ -144,6 +155,7 @@ public class PlayerService extends Service {
         }
     }
 
+<<<<<<< HEAD
     private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {
 
         @Override
@@ -152,22 +164,22 @@ public class PlayerService extends Service {
                 case AudioManager.AUDIOFOCUS_GAIN:
                     Log.i(TAG, "AUDIOFOCUS_GAIN");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    doubleVolume();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
                     Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    doubleVolume();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
                     Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    doubleVolume();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
                     Log.e(TAG, "AUDIOFOCUS_LOSS");
                     // Lower the volume
-                    pause();
+                    halveVolume();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                     Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
@@ -183,6 +195,8 @@ public class PlayerService extends Service {
         }
     }
 
+=======
+>>>>>>> 3a649f36f441ee7df5ac8e945085d2ee51fb05c2
     public void pause() {
         mMediaPlayer.pause();
         updateNotification();
