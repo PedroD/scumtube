@@ -45,6 +45,9 @@ public class PlayerService extends Service {
 
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
     private static boolean isVolumeHalved = false;
+    private static String streamMp3Url;
+    private static String streamCoverUrl;
+    private static String streamTitle;
     private RemoteViews mSmallNotificationView;
     private boolean mShowingNotification;
     private Notification mNotification;
@@ -53,7 +56,6 @@ public class PlayerService extends Service {
     private MediaPlayer mMediaPlayer = new MediaPlayer();
     private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
     private String mVideoTitle;
-    private String streamUrl;
 
     public PlayerService() {
     }
@@ -107,15 +109,15 @@ public class PlayerService extends Service {
         try {
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mMediaPlayer.setDataSource(this, Uri.parse(streamUrl)); //TODO URL
+            mMediaPlayer.setDataSource(this, Uri.parse(streamMp3Url)); //TODO URL
         } catch (Exception e) {
-            Log.i(TAG, "ERRO FILENOTFUND " + streamUrl);
+            Log.i(TAG, "ERRO FILENOTFUND " + streamMp3Url);
             e.printStackTrace();
         }
         try {
             mMediaPlayer.prepare(); // might take long! (for buffering, etc)
         } catch (IOException e) {
-            Log.i(TAG, "ERRO FILENOTFUND 2 " + streamUrl);
+            Log.i(TAG, "ERRO FILENOTFUND 2 " + streamMp3Url);
             e.printStackTrace();
         }
         mMediaPlayer.start();
@@ -138,45 +140,6 @@ public class PlayerService extends Service {
             // take appropriate action
         } else if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             // take appropriate error action
-        }
-    }
-
-    private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {
-
-        @Override
-        public void onAudioFocusChange(int focusChange) {
-            switch (focusChange) {
-                case AudioManager.AUDIOFOCUS_GAIN:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
-                    // Set volume level to desired levels
-                    returnVolumeToNormal();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS");
-                    // Lower the volume
-                    pause();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
-                    // Lower the volume
-                    halveVolume();
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
-                    // Lower the volume
-                    halveVolume();
-                    break;
-            }
         }
     }
 
@@ -370,6 +333,45 @@ public class PlayerService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
+    private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {
+
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            switch (focusChange) {
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN");
+                    // Set volume level to desired levels
+                    returnVolumeToNormal();
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                    // Set volume level to desired levels
+                    returnVolumeToNormal();
+                    break;
+                case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                    // Set volume level to desired levels
+                    returnVolumeToNormal();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS");
+                    // Lower the volume
+                    pause();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                    // Lower the volume
+                    halveVolume();
+                    break;
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                    // Lower the volume
+                    halveVolume();
+                    break;
+            }
+        }
+    }
+
     class RequestMp3Task extends Thread {
 
         private final String videoId;
@@ -397,25 +399,48 @@ public class PlayerService extends Service {
 
                         String line = bufferedReader.readLine();
                         while (line != null) {
-                            stringBuilder.append(line + " \n");
+                            stringBuilder.append(line);
+                            stringBuilder.append(" \n");
                             line = bufferedReader.readLine();
                         }
                         bufferedReader.close();
 
                         jsonObject = new JSONObject(stringBuilder.toString());
                         if (jsonObject.has("ready")) {
-                            break;
+                            streamMp3Url = jsonObject.getString("url");
+                            streamCoverUrl = jsonObject.getString("cover");
+                            streamTitle = jsonObject.getString("title");
+                            Log.i(TAG, streamTitle + " :: " + streamMp3Url + " :: " + streamCoverUrl);
+                            PlayerService.this.start();
+                            return;
+                        } else if (jsonObject.has("error")) {
+                            final String errorMsg = jsonObject.getString("error");
+                            throw new Exception(errorMsg);
                         }
                         Log.i(TAG, jsonObject.getString("scheduled"));
                         Thread.sleep(10000);
                     }
                 }
-                streamUrl = jsonObject.getString("url");
-                Log.i(TAG, streamUrl);
-                PlayerService.this.start();
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.e(TAG, e.getMessage());
+                showToast(e.getMessage());
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                }
+                exit();
             }
+        }
+
+        private void showToast(final String message) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(PlayerService.this.getApplicationContext(), message, Toast.LENGTH_LONG).show();
+                }
+            });
         }
     }
 
