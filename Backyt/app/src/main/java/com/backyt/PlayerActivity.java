@@ -25,6 +25,7 @@ public class PlayerActivity extends Activity {
             Toast.makeText(getApplicationContext(), "An error occurred!", Toast.LENGTH_LONG).show();
         }
         moveTaskToBack(true);
+        finish();
     }
 
 }
