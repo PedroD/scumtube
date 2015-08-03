@@ -190,6 +190,7 @@ public class PlayerService extends Service {
     public void exit() {
         mMediaPlayer.stop();
         stopSelf();
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     public void loop() {
