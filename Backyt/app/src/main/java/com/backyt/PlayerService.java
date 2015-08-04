@@ -5,9 +5,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,7 +20,6 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
@@ -43,12 +45,14 @@ public class PlayerService extends Service {
     public static final String ACTION_PAUSE = "com.backyt.ACTION_PAUSE";
     public static final String ACTION_EXIT = "com.backyt.ACTION_EXIT";
     public static final String ACTION_LOOP = "com.backyt.ACTION_LOOP";
+    public static final String ACTION_DOWNLOAD = "com.backyt.ACTION_DOWNLOAD";
 
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
-    private static boolean isVolumeHalved = false;
-    private static String streamMp3Url;
-    private static String streamCoverUrl;
-    private static String streamTitle;
+    private static boolean sIsVolumeHalved = false;
+    private static String sStreamMp3Url;
+    private static String sStreamCoverUrl;
+    private static String sStreamTitle;
+    private static Bitmap sCover;
     private RemoteViews mSmallNotificationView;
     private boolean mShowingNotification;
     private Notification mNotification;
@@ -93,6 +97,8 @@ public class PlayerService extends Service {
             loop();
         } else if (intent.getAction().equals(ACTION_EXIT)) {
             exit();
+        } else if (intent.getAction().equals(ACTION_DOWNLOAD)){
+            download();
         } else {
             Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
             return START_NOT_STICKY;
@@ -109,7 +115,7 @@ public class PlayerService extends Service {
         try {
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mMediaPlayer.setDataSource(this, Uri.parse(streamMp3Url)); //TODO URL
+            mMediaPlayer.setDataSource(this, Uri.parse(sStreamMp3Url)); //TODO URL
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -173,17 +179,23 @@ public class PlayerService extends Service {
         }
     }
 
+    public void download(){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
+        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(browserIntent);
+    }
+
     public void halveVolume() {
-        if (!isVolumeHalved) {
+        if (!sIsVolumeHalved) {
             mMediaPlayer.setVolume(0.1f, 0.1f);
-            isVolumeHalved = true;
+            sIsVolumeHalved = true;
         }
     }
 
     public void returnVolumeToNormal() {
-        if (isVolumeHalved) {
+        if (sIsVolumeHalved) {
             mMediaPlayer.setVolume(1f, 1f);
-            isVolumeHalved = false;
+            sIsVolumeHalved = false;
         }
     }
 
@@ -220,6 +232,11 @@ public class PlayerService extends Service {
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
 
+            intent = new Intent(ACTION_DOWNLOAD, null, PlayerService.this, PlayerService.class);
+            PendingIntent downloadPendingIntent = PendingIntent
+                    .getService(PlayerService.this, 0, intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 mSmallNotificationView = new RemoteViews(getPackageName(),
                         R.layout.notification_small);
@@ -230,7 +247,7 @@ public class PlayerService extends Service {
             mSmallNotificationView
                     .setTextViewText(R.id.notification_small_textview, APP_NAME);
             mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
-                    streamTitle);
+                    sStreamTitle);
             if (mMediaPlayer.isPlaying()) {
                 mSmallNotificationView
                         .setImageViewResource(R.id.notification_small_imageview_playpause,
@@ -249,6 +266,11 @@ public class PlayerService extends Service {
                         .setImageViewResource(R.id.notification_small_imageview_loop,
                                 R.drawable.ic_player_loop_off_light);
             }
+            if (sCover != null){
+                mSmallNotificationView
+                        .setImageViewBitmap(R.id.notification_small_imageview_albumart,
+                                sCover);
+            }
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                             playPausePendingIntent);
@@ -258,11 +280,14 @@ public class PlayerService extends Service {
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_exit,
                             exitPendingIntent);
+            mSmallNotificationView
+                    .setOnClickPendingIntent(R.id.notification_small_imageview_download,
+                            downloadPendingIntent);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
                     .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
-                    .setContentText(streamTitle).setOngoing(true).setPriority(
+                    .setContentText(sStreamTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
 
             mNotification = builder.build();
@@ -273,7 +298,7 @@ public class PlayerService extends Service {
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
                         APP_NAME);
                 mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview2, streamTitle);
+                        .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
                 if (mMediaPlayer.isPlaying()) {
                     mLargeNotificationView
                             .setImageViewResource(R.id.notification_large_imageview_playpause,
@@ -292,6 +317,11 @@ public class PlayerService extends Service {
                             .setImageViewResource(R.id.notification_large_imageview_loop,
                                     R.drawable.ic_player_loop_off_light);
                 }
+                if (sCover != null){
+                    mLargeNotificationView
+                            .setImageViewBitmap(R.id.notification_large_imageview_albumart,
+                                    sCover);
+                }
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
                                 playPausePendingIntent);
@@ -301,6 +331,9 @@ public class PlayerService extends Service {
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_exit,
                                 exitPendingIntent);
+                mLargeNotificationView
+                        .setOnClickPendingIntent(R.id.notification_large_imageview_download,
+                                downloadPendingIntent);
                 mNotification.bigContentView = mLargeNotificationView;
 
                 /*new Handler(Looper.getMainLooper()).post(new Runnable() {
@@ -405,11 +438,12 @@ public class PlayerService extends Service {
 
                         jsonObject = new JSONObject(stringBuilder.toString());
                         if (jsonObject.has("ready")) {
-                            streamMp3Url = jsonObject.getString("url");
-                            streamCoverUrl = jsonObject.getString("cover");
-                            streamTitle = jsonObject.getString("title");
-                            Log.i(TAG, streamTitle + " :: " + streamMp3Url + " :: " + streamCoverUrl);
+                            sStreamMp3Url = jsonObject.getString("url");
+                            sStreamCoverUrl = jsonObject.getString("cover");
+                            sStreamTitle = jsonObject.getString("title");
+                            Log.i(TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
                             PlayerService.this.start();
+                            new DownloadImageTask().execute(sStreamCoverUrl);
                             return;
                         } else if (jsonObject.has("error")) {
                             final String errorMsg = jsonObject.getString("error");
@@ -428,6 +462,25 @@ public class PlayerService extends Service {
                 } catch (InterruptedException e1) {
                 }
                 exit();
+            }
+        }
+
+        private class DownloadImageTask extends AsyncTask<String, Void, Void> {
+
+            @Override
+            protected Void doInBackground(String... urls) {
+                String coverUrl = urls[0];
+                Bitmap cover = null;
+                try {
+                    InputStream in = new java.net.URL(coverUrl).openStream();
+                    cover = BitmapFactory.decodeStream(in);
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                    e.printStackTrace();
+                }
+                sCover = cover;
+                updateNotification();
+                return null;
             }
         }
 
