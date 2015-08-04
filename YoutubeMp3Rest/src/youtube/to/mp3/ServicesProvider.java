@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Header;
@@ -24,7 +25,7 @@ public final class ServicesProvider {
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
 	private static final String FINAL_DIR = "www/";
 	private static final int MAX_MINUTES_STORING_ABORTED_REQUEST = 120;
-	private static final int MAX_MUSIC_DURATION = 10;
+	private static final int MAX_MUSIC_DURATION_MINUTES = 10;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 3;
 
@@ -153,8 +154,9 @@ public final class ServicesProvider {
 					}
 					boolean downloadSuccessfull = false;
 					if (getMetadata()) {
-						if (duration >= MAX_MUSIC_DURATION) {
-							abortRequest("Could not download video because it exceeds " + MAX_MUSIC_DURATION + " minutes.");
+						if (duration >= MAX_MUSIC_DURATION_MINUTES) {
+							abortRequest(
+									"Could not download video because it exceeds " + MAX_MUSIC_DURATION_MINUTES + " minutes.");
 							sem.release();
 							return;
 						}
@@ -224,39 +226,32 @@ public final class ServicesProvider {
 		}
 
 		private String executeCommand(String command) {
-			StringBuffer output = new StringBuffer();
+			final StringBuilder output = new StringBuilder();
 			try {
 				Process p = Runtime.getRuntime().exec(command);
 				BufferedReader reader1 = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				BufferedReader reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-				String line = "";
-				while ((line = reader1.readLine()) != null) {
-					output.append(line + "\n");
+				byte c;
+				while ((c = (byte) reader1.read()) != -1) {
+					output.append(new String(new byte[] { c }, "UTF-8"));
 				}
-				while ((line = reader2.readLine()) != null) {
-					output.append("Error output: " + line + "\n");
-				}
-				output.append("exit code: " + p.waitFor() + "\n");
+				// output.append("exit code: " + p.waitFor() + "\n");
+				return StringEscapeUtils.unescapeJava(output.toString().replace("\\n", "").replace("\\r", ""));
 			} catch (Exception e) {
 				e.printStackTrace();
+				return null;
 			}
-			return output.toString();
 		}
 
 		private boolean getMetadata() {
 			try {
 				final String metadataCmd = "youtube-dl "
-						+ "--get-title --get-duration "
+						+ "--dump-json "
 						+ "https://www.youtube.com/watch?v="
 						+ videoId;
-				final String metadataResult = executeCommand(metadataCmd);
-				final String[] tokens = metadataResult.split("\n");
-				final String[] durationTokens = tokens[1].split(":");
-				this.title = tokens[0];
-				if (durationTokens.length == 2)
-					this.duration = Integer.parseInt(durationTokens[0]);
-				else
-					this.duration = MAX_MUSIC_DURATION + 1;
+				final String tmp = executeCommand(metadataCmd);
+				final JSONObject metadataResult = new JSONObject(tmp);
+				this.title = metadataResult.getString("title");
+				this.duration = (int) Math.round(metadataResult.getInt("duration") / 60.0);
 				return true;
 			} catch (Exception e) {
 				abortRequest(e.getMessage() + " Is the video id correct?");
