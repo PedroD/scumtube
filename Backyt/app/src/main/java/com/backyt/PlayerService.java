@@ -97,7 +97,7 @@ public class PlayerService extends Service {
             loop();
         } else if (intent.getAction().equals(ACTION_EXIT)) {
             exit();
-        } else if (intent.getAction().equals(ACTION_DOWNLOAD)){
+        } else if (intent.getAction().equals(ACTION_DOWNLOAD)) {
             download();
         } else {
             Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
@@ -167,9 +167,8 @@ public class PlayerService extends Service {
         if (mMediaPlayer.isPlaying()) {
             pause();
         } else {
-            mMediaPlayer.start();
+            play();
         }
-        updateNotification();
     }
 
     public void play() {
@@ -179,7 +178,7 @@ public class PlayerService extends Service {
         }
     }
 
-    public void download(){
+    public void download() {
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
         browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(browserIntent);
@@ -214,6 +213,11 @@ public class PlayerService extends Service {
     }
 
     public void updateNotification() {
+        try {
+            throw new Exception("CONA");
+        } catch (Exception e) {
+            Log.e(TAG, "lol", e);
+        }
         if (mShowingNotification) {
             Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
                     PlayerService.class);
@@ -266,7 +270,7 @@ public class PlayerService extends Service {
                         .setImageViewResource(R.id.notification_small_imageview_loop,
                                 R.drawable.ic_player_loop_off_light);
             }
-            if (sCover != null){
+            if (sCover != null) {
                 mSmallNotificationView
                         .setImageViewBitmap(R.id.notification_small_imageview_albumart,
                                 sCover);
@@ -317,7 +321,7 @@ public class PlayerService extends Service {
                             .setImageViewResource(R.id.notification_large_imageview_loop,
                                     R.drawable.ic_player_loop_off_light);
                 }
-                if (sCover != null){
+                if (sCover != null) {
                     mLargeNotificationView
                             .setImageViewBitmap(R.id.notification_large_imageview_albumart,
                                     sCover);
