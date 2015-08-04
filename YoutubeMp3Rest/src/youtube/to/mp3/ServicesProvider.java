@@ -234,8 +234,9 @@ public final class ServicesProvider {
 				while ((c = (byte) reader1.read()) != -1) {
 					output.append(new String(new byte[] { c }, "UTF-8"));
 				}
+				final String protectedStr = output.toString().replace("\\n", "").replace("\\r", "").replace("\\\"", "\\\\\"");
 				// output.append("exit code: " + p.waitFor() + "\n");
-				return StringEscapeUtils.unescapeJava(output.toString().replace("\\n", "").replace("\\r", ""));
+				return StringEscapeUtils.unescapeJava(protectedStr);
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
