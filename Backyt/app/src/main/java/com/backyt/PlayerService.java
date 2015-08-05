@@ -76,7 +76,7 @@ public class PlayerService extends Service {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                updateNotification();
+                drawPlayPause();
             }
         });
     }
@@ -115,7 +115,7 @@ public class PlayerService extends Service {
         try {
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mMediaPlayer.setDataSource(this, Uri.parse(sStreamMp3Url)); //TODO URL
+            mMediaPlayer.setDataSource(this, Uri.parse(sStreamMp3Url));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -127,7 +127,7 @@ public class PlayerService extends Service {
         mMediaPlayer.start();
 
         mShowingNotification = true;
-        updateNotification();
+        createNotification();
 
         /*
          * Detect when videos start playing in the background to lower or stop the music.
@@ -149,7 +149,7 @@ public class PlayerService extends Service {
 
     public void pause() {
         mMediaPlayer.pause();
-        updateNotification();
+        drawPlayPause();
     }
 
     public void exit() {
@@ -160,7 +160,7 @@ public class PlayerService extends Service {
 
     public void loop() {
         mMediaPlayer.setLooping(!mMediaPlayer.isLooping());
-        updateNotification();
+        drawLoop();
     }
 
     public void playPause() {
@@ -174,7 +174,7 @@ public class PlayerService extends Service {
     public void play() {
         if (!mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
-            updateNotification();
+            drawPlayPause();
         }
     }
 
@@ -212,30 +212,77 @@ public class PlayerService extends Service {
         startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
 
-    public void updateNotification() {
-        try {
-            throw new Exception("CONA");
-        } catch (Exception e) {
-            Log.e(TAG, "lol", e);
+    public void drawCover(){
+        mSmallNotificationView
+                .setImageViewBitmap(R.id.notification_small_imageview_albumart,
+                        sCover);
+        mLargeNotificationView
+                .setImageViewBitmap(R.id.notification_large_imageview_albumart,
+                        sCover);
+        updateNotification();
+    }
+
+    public void drawPlayPause(){
+        if (mMediaPlayer.isPlaying()) {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_playpause,
+                            R.drawable.ic_player_pause_light);
+            mLargeNotificationView
+                    .setImageViewResource(R.id.notification_large_imageview_playpause,
+                            R.drawable.ic_player_pause_light);
+        } else {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_playpause,
+                            R.drawable.ic_player_play_light);
+            mLargeNotificationView
+                    .setImageViewResource(R.id.notification_large_imageview_playpause,
+                            R.drawable.ic_player_play_light);
         }
+        updateNotification();
+    }
+
+    public void drawLoop(){
+        if (mMediaPlayer.isLooping()) {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_loop,
+                            R.drawable.ic_player_loop_on_light);
+            mLargeNotificationView
+                    .setImageViewResource(R.id.notification_large_imageview_loop,
+                            R.drawable.ic_player_loop_on_light);
+        } else {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_loop,
+                            R.drawable.ic_player_loop_off_light);
+            mLargeNotificationView
+                    .setImageViewResource(R.id.notification_large_imageview_loop,
+                            R.drawable.ic_player_loop_off_light);
+        }
+        updateNotification();
+    }
+
+    public void updateNotification(){
+        mNotification.contentView = mSmallNotificationView;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mNotification.bigContentView = mLargeNotificationView;
+        }
+        startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+    }
+    public void createNotification() {
         if (mShowingNotification) {
             Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
                     PlayerService.class);
             PendingIntent playPausePendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-
             intent = new Intent(ACTION_LOOP, null, PlayerService.this,
                     PlayerService.class);
             PendingIntent loopPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-
             intent = new Intent(ACTION_EXIT, null, PlayerService.this, PlayerService.class);
             PendingIntent exitPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-
             intent = new Intent(ACTION_DOWNLOAD, null, PlayerService.this, PlayerService.class);
             PendingIntent downloadPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
@@ -248,33 +295,7 @@ public class PlayerService extends Service {
                 mSmallNotificationView = new RemoteViews(getPackageName(),
                         R.layout.notification_small_compat);
             }
-            mSmallNotificationView
-                    .setTextViewText(R.id.notification_small_textview, APP_NAME);
-            mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
-                    sStreamTitle);
-            if (mMediaPlayer.isPlaying()) {
-                mSmallNotificationView
-                        .setImageViewResource(R.id.notification_small_imageview_playpause,
-                                R.drawable.ic_player_pause_light);
-            } else {
-                mSmallNotificationView
-                        .setImageViewResource(R.id.notification_small_imageview_playpause,
-                                R.drawable.ic_player_play_light);
-            }
-            if (mMediaPlayer.isLooping()) {
-                mSmallNotificationView
-                        .setImageViewResource(R.id.notification_small_imageview_loop,
-                                R.drawable.ic_player_loop_on_light);
-            } else {
-                mSmallNotificationView
-                        .setImageViewResource(R.id.notification_small_imageview_loop,
-                                R.drawable.ic_player_loop_off_light);
-            }
-            if (sCover != null) {
-                mSmallNotificationView
-                        .setImageViewBitmap(R.id.notification_small_imageview_albumart,
-                                sCover);
-            }
+
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                             playPausePendingIntent);
@@ -288,6 +309,11 @@ public class PlayerService extends Service {
                     .setOnClickPendingIntent(R.id.notification_small_imageview_download,
                             downloadPendingIntent);
 
+            mSmallNotificationView
+                    .setTextViewText(R.id.notification_small_textview, APP_NAME);
+            mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
+                    sStreamTitle);
+
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
                     .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
@@ -299,33 +325,6 @@ public class PlayerService extends Service {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 mLargeNotificationView = new RemoteViews(getPackageName(),
                         R.layout.notification_large);
-                mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
-                        APP_NAME);
-                mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
-                if (mMediaPlayer.isPlaying()) {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_playpause,
-                                    R.drawable.ic_player_pause_light);
-                } else {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_playpause,
-                                    R.drawable.ic_player_play_light);
-                }
-                if (mMediaPlayer.isLooping()) {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_loop,
-                                    R.drawable.ic_player_loop_on_light);
-                } else {
-                    mLargeNotificationView
-                            .setImageViewResource(R.id.notification_large_imageview_loop,
-                                    R.drawable.ic_player_loop_off_light);
-                }
-                if (sCover != null) {
-                    mLargeNotificationView
-                            .setImageViewBitmap(R.id.notification_large_imageview_albumart,
-                                    sCover);
-                }
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
                                 playPausePendingIntent);
@@ -338,27 +337,14 @@ public class PlayerService extends Service {
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_download,
                                 downloadPendingIntent);
-                mNotification.bigContentView = mLargeNotificationView;
-
-                /*new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        TomahawkUtils.loadImageIntoNotification(TomahawkApp.getContext(),
-                                getCurrentQuery().getImage(), mSmallNotificationView,
-                                R.id.notification_small_imageview_albumart,
-                                PLAYBACKSERVICE_NOTIFICATION_ID,
-                                mNotification, Image.getSmallImageSize(),
-                                getCurrentQuery().hasArtistImage());
-                        TomahawkUtils.loadImageIntoNotification(TomahawkApp.getContext(),
-                                getCurrentQuery().getImage(), mLargeNotificationView,
-                                R.id.notification_large_imageview_albumart,
-                                PLAYBACKSERVICE_NOTIFICATION_ID,
-                                mNotification, Image.getSmallImageSize(),
-                                getCurrentQuery().hasArtistImage());
-                    }
-                });*/
+                mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
+                        APP_NAME);
+                mLargeNotificationView
+                        .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
             }
-            startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+            drawPlayPause();
+            drawLoop();
+            updateNotification();
         }
     }
 
@@ -483,7 +469,7 @@ public class PlayerService extends Service {
                     e.printStackTrace();
                 }
                 sCover = cover;
-                updateNotification();
+                drawCover();
                 return null;
             }
         }
