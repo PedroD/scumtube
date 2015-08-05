@@ -1,6 +1,7 @@
 package com.backyt;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
@@ -218,9 +219,11 @@ public class PlayerService extends Service {
         mSmallNotificationView
                 .setImageViewBitmap(R.id.notification_small_imageview_albumart,
                         sCover);
-        mLargeNotificationView
-                .setImageViewBitmap(R.id.notification_large_imageview_albumart,
-                        sCover);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mLargeNotificationView
+                    .setImageViewBitmap(R.id.notification_large_imageview_albumart,
+                            sCover);
+        }
         updateNotification();
     }
 
@@ -229,16 +232,20 @@ public class PlayerService extends Service {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_playpause,
                             R.drawable.ic_player_pause_light);
-            mLargeNotificationView
-                    .setImageViewResource(R.id.notification_large_imageview_playpause,
-                            R.drawable.ic_player_pause_light);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_playpause,
+                                R.drawable.ic_player_pause_light);
+            }
         } else {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_playpause,
                             R.drawable.ic_player_play_light);
-            mLargeNotificationView
-                    .setImageViewResource(R.id.notification_large_imageview_playpause,
-                            R.drawable.ic_player_play_light);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_playpause,
+                                R.drawable.ic_player_play_light);
+            }
         }
         updateNotification();
     }
@@ -248,16 +255,20 @@ public class PlayerService extends Service {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_loop,
                             R.drawable.ic_player_loop_on_light);
-            mLargeNotificationView
-                    .setImageViewResource(R.id.notification_large_imageview_loop,
-                            R.drawable.ic_player_loop_on_light);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_loop,
+                                R.drawable.ic_player_loop_on_light);
+            }
         } else {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_loop,
                             R.drawable.ic_player_loop_off_light);
-            mLargeNotificationView
-                    .setImageViewResource(R.id.notification_large_imageview_loop,
-                            R.drawable.ic_player_loop_off_light);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_loop,
+                                R.drawable.ic_player_loop_off_light);
+            }
         }
         updateNotification();
     }
@@ -267,7 +278,8 @@ public class PlayerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mNotification.bigContentView = mLargeNotificationView;
         }
-        startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
     public void createNotification() {
         if (mShowingNotification) {
@@ -339,6 +351,7 @@ public class PlayerService extends Service {
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_download,
                                 downloadPendingIntent);
+
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
                         APP_NAME);
                 mLargeNotificationView
