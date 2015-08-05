@@ -1,8 +1,10 @@
 package youtube.to.mp3;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -12,7 +14,11 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.lang.StringEscapeUtils;
+import org.imgscalr.Scalr;
+import org.imgscalr.Scalr.Mode;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Header;
@@ -28,8 +34,8 @@ public final class ServicesProvider {
 	private static final int MAX_MUSIC_DURATION_MINUTES = 10;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 3;
-
 	private static final String TEMP_DIR = "tmp/";
+	private static final int THUMBNAIL_SIZE_PX = 200;
 
 	private static final class VideoRequest {
 		private static final Map<String, VideoRequest> abortedRequests = new HashMap<String, VideoRequest>();
@@ -187,9 +193,10 @@ public final class ServicesProvider {
 						 */
 						final File thumbnailFile = new File(TEMP_DIR + videoId + ".jpg");
 						if (thumbnailFile.exists() && getTemporaryFile().exists()) {
-							getTemporaryFile().renameTo(new File(FINAL_DIR + getTemporaryFile().getName()));
-							thumbnailFile.renameTo(new File(FINAL_DIR + thumbnailFile.getName()));
 							try {
+								getTemporaryFile().renameTo(new File(FINAL_DIR + getTemporaryFile().getName()));
+								resizeThumbnail(thumbnailFile.getCanonicalPath());
+								thumbnailFile.renameTo(new File(FINAL_DIR + thumbnailFile.getName()));
 								writeTitleToFile();
 							} catch (Exception e) {
 								e.printStackTrace();
@@ -198,6 +205,15 @@ public final class ServicesProvider {
 					}
 					sem.release();
 					return;
+				}
+
+				private void resizeThumbnail(String imagePath) throws IOException {
+					final File destFile = new File(imagePath);
+					final BufferedImage img = ImageIO.read(destFile);
+					final Double proportion = new Double(img.getWidth()) / new Double(img.getHeight());
+					final BufferedImage scaledImg = Scalr.resize(img, Mode.AUTOMATIC, THUMBNAIL_SIZE_PX,
+							(int) Math.round(proportion * THUMBNAIL_SIZE_PX));
+					ImageIO.write(scaledImg, "jpg", destFile);
 				}
 			};
 			t.start();
