@@ -179,7 +179,9 @@ public class PlayerService extends Service {
     }
 
     public void download() {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
+        final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+        getApplicationContext().sendBroadcast(it);
+        final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
         browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(browserIntent);
     }
