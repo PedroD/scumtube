@@ -206,7 +206,7 @@ public class PlayerService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 PlayerService.this)
-                .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
+                .setSmallIcon(R.drawable.ic_loading).setContentTitle(APP_NAME)
                 .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContent(mSmallLoadingNotificationView);
 
