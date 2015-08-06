@@ -81,8 +81,8 @@ public final class ServicesProvider {
 
 					while (!an.getAttribute("href").toString().contains("http")) {
 						try {
-							page.getElementById("error");
-							return false;
+							if (page.getElementById("error") != null)
+								return false;
 						} catch (Exception e) {
 						}
 						Thread.sleep(1000);
