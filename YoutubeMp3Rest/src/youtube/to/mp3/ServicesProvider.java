@@ -1,24 +1,14 @@
 package youtube.to.mp3;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
-import javax.imageio.ImageIO;
-
-import org.apache.commons.lang.StringEscapeUtils;
-import org.imgscalr.Scalr;
-import org.imgscalr.Scalr.Mode;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Header;
@@ -26,19 +16,27 @@ import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+
 public final class ServicesProvider {
 
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
-	private static final String FINAL_DIR = "www/";
-	private static final int MAX_MINUTES_STORING_ABORTED_REQUEST = 120;
-	private static final int MAX_MUSIC_DURATION_MINUTES = 10;
+	private static final int MAX_MINUTES_STORING_ABORTED_REQUEST = 20;
 	private static final int MAX_RETRIES = 3;
-	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 3;
-	private static final String TEMP_DIR = "tmp/";
-	private static final int THUMBNAIL_SIZE_PX = 200;
+	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
 	private static final class VideoRequest {
-		private static final Map<String, VideoRequest> abortedRequests = new HashMap<String, VideoRequest>();
+		private static final Map<String, VideoRequest> completedRequests = new HashMap<String, VideoRequest>();
 		private static final Object lock = new Object();
 		private static final Map<String, VideoRequest> requestsQueue = new HashMap<String, VideoRequest>();
 		private static final Semaphore simultaneousDownloads = new Semaphore(MAX_SIMULTANEOUS_DOWNLOADS);
@@ -47,11 +45,100 @@ public final class ServicesProvider {
 
 		private String abortedMessage;
 		private long abortedTimestamp = 0;
-		private int duration = -1;
+		private String coverUrl = "";
+		private String mp3Url = "";
 		private boolean ready = false;
 		private int retries = 0;
 		private String title = "";
 		private final String videoId;
+
+		private final class DownloadThread extends Thread {
+
+			final Semaphore sem;
+
+			public DownloadThread(Semaphore sem) {
+				this.sem = sem;
+			}
+
+			private boolean fetchVideoInfoFromServer() throws Exception {
+				// LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
+				// "org.apache.commons.logging.impl.NoOpLog");
+				// java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
+				// java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
+
+				WebClient webClient = null;
+				try {
+					webClient = new WebClient(BrowserVersion.FIREFOX_38);
+					webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+
+					final HtmlPage page = webClient.getPage("http://www.youtube-mp3.org/");
+					final HtmlForm form = (HtmlForm) getElementById(page, "form", "submit-form");
+					final HtmlTextInput textField = (HtmlTextInput) getElementById(form, "input", "youtube-url");
+					final HtmlSubmitInput button = (HtmlSubmitInput) getElementById(form, "input", "submit");
+
+					textField.setValueAttribute("https://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
+					button.click();
+
+					DomNodeList<HtmlElement> a = page.getElementById("dl_link").getElementsByTagName("a");
+					for (HtmlElement e : a) {
+						if (!e.hasAttribute("style")) {
+							VideoRequest.this.mp3Url = "http://www.youtube-mp3.org"
+									+ e.getAttribute("href").toString();
+							System.out.println("================= " + mp3Url);
+						}
+					}
+					a = page.getElementById("image").getElementsByTagName("img");
+					for (HtmlElement e : a) {
+						VideoRequest.this.coverUrl = e.getAttribute("src");
+					}
+					VideoRequest.this.title = page.getElementById("title").asText().substring(7);
+				} catch (ElementNotFoundException e) {
+					new Logger().log(Logger.LOG_ERROR, "Error scraping the website. " + e.getMessage());
+					e.printStackTrace();
+					if (webClient != null) {
+						webClient.close();
+					}
+					return false;
+				} catch (Exception e) {
+					e.printStackTrace();
+					if (webClient != null) {
+						webClient.close();
+					}
+					throw e;
+				}
+				webClient.close();
+				return true;
+
+			}
+
+			private HtmlElement getElementById(DomNode n, String tag, String id) {
+				return n.getFirstByXPath("//" + tag + "[@id='" + id + "']");
+			}
+
+			@Override
+			public void run() {
+				boolean success = false;
+				while (retries < MAX_RETRIES) {
+					if (retries > 0) {
+						new Logger().log(Logger.LOG_WARNING, "Retrying... " + videoId);
+					}
+					retries++;
+					try {
+						success = fetchVideoInfoFromServer();
+						break;
+					} catch (Exception e) {
+						e.printStackTrace();
+						continue;
+					}
+				}
+				if (!success) {
+					VideoRequest.this.abortRequest(
+							"There was an error connecting Youtube or the video length is greater than 20 minutes.");
+				}
+				sem.release();
+				return;
+			}
+		}
 
 		public static final class AbortedRequestsCleaner extends Thread {
 			private static AbortedRequestsCleaner r;
@@ -72,19 +159,21 @@ public final class ServicesProvider {
 			public void run() {
 				try {
 					while (true) {
-						/* 20 minutes */
-						Thread.sleep(20 * 60000);
-						final List<String> toRemove = new ArrayList<String>();
-						for (Map.Entry<String, VideoRequest> vr : abortedRequests.entrySet()) {
-							final long delta = TimeUnit.MILLISECONDS
-									.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
-							if (delta >= MAX_MINUTES_STORING_ABORTED_REQUEST) {
-								toRemove.add(vr.getKey());
-								new Logger().log(Logger.LOG_INFO, "Removed old aborted request " + vr.getKey() + ".");
+						Thread.sleep(Math.round(MAX_MINUTES_STORING_ABORTED_REQUEST / 2.0) * 60000);
+						synchronized (lock) {
+							final List<String> toRemove = new ArrayList<String>();
+
+							for (Map.Entry<String, VideoRequest> vr : completedRequests.entrySet()) {
+								final long delta = TimeUnit.MILLISECONDS
+										.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
+								if (delta >= MAX_MINUTES_STORING_ABORTED_REQUEST) {
+									toRemove.add(vr.getKey());
+									new Logger().log(Logger.LOG_INFO, "Removed old aborted request " + vr.getKey() + ".");
+								}
 							}
-						}
-						for (String v : toRemove) {
-							abortedRequests.remove(v);
+							for (String v : toRemove) {
+								completedRequests.remove(v);
+							}
 						}
 					}
 				} catch (InterruptedException e) {
@@ -100,39 +189,33 @@ public final class ServicesProvider {
 
 		public VideoRequest(final String videoId) {
 			this.videoId = videoId;
-			try {
+			final VideoRequest tmpVr = wasPreviouslyHandled();
+			if (tmpVr != null) {
+				this.aborted = tmpVr.aborted;
+				this.ready = tmpVr.ready;
+				this.abortedMessage = tmpVr.abortedMessage;
+				this.coverUrl = tmpVr.coverUrl;
+				this.title = tmpVr.title;
+				this.mp3Url = tmpVr.mp3Url;
+			} else if (!isDownloadingAlready()) {
 				synchronized (lock) {
-					if (wasAbortedAlready()) {
-						ready = true;
-						aborted = true;
-						abortedMessage = abortedRequests.get(videoId).getAbortedMessage();
-					} else if (this.isMP3FileAlreadyCreated() && !isDownloadingAlready()) {
-						ready = true;
-						this.title = new BufferedReader(new FileReader(FINAL_DIR + videoId + ".txt")).readLine();
-						touchFile();
-					} else if (!isDownloadingAlready()) {
-						requestsQueue.put(videoId, this);
-						new Thread() {
-							@Override
-							public void run() {
-								try {
-									simultaneousDownloads.acquire();
-									new Logger().log(Logger.LOG_INFO, "Preparing video " + videoId);
-									VideoRequest.this.download();
-									simultaneousDownloads.release();
-									new Logger().log(Logger.LOG_INFO, "Finished preparing " + videoId);
-								} catch (InterruptedException e) {
-									e.printStackTrace();
-								}
-							}
-						}.start();
-					}
+					requestsQueue.put(videoId, this);
 				}
-			} catch (Exception e) {
-				ready = true;
-				aborted = true;
-				abortedMessage = e.getMessage();
-				e.printStackTrace();
+				new Thread() {
+					@Override
+					public void run() {
+						try {
+							simultaneousDownloads.acquire();
+							new Logger().log(Logger.LOG_INFO, "Preparing video " + videoId);
+							VideoRequest.this.download();
+							simultaneousDownloads.release();
+							ready = true;
+							new Logger().log(Logger.LOG_INFO, "Finished preparing " + videoId);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}.start();
 			}
 		}
 
@@ -145,167 +228,39 @@ public final class ServicesProvider {
 
 		@SuppressWarnings("deprecation")
 		private void download() {
-			/*
-			 * Semaphore released only when the download finishes (with error or not).
-			 */
-			final Semaphore sem = new Semaphore(0);
-			if (getTemporaryFile().exists()) {
-				getTemporaryFile().delete();
-			}
-			final Thread t = new Thread() {
-				@Override
-				public void run() {
-					if (retries > 0) {
-						new Logger().log(Logger.LOG_WARNING, "Retrying... " + videoId);
-					}
-					boolean downloadSuccessfull = false;
-					if (getMetadata()) {
-						if (duration >= MAX_MUSIC_DURATION_MINUTES) {
-							abortRequest(
-									"Could not download video because it exceeds " + MAX_MUSIC_DURATION_MINUTES + " minutes.");
-							sem.release();
-							return;
-						}
-						final String downloadCmd = "youtube-dl "
-								+ "-o " + TEMP_DIR + "%(id)s.%(ext)s "
-								+ "--extract-audio "
-								+ "--write-thumbnail "
-								+ "--audio-format mp3 "
-								+ "--audio-quality 160K "
-								+ "https://www.youtube.com/watch?v="
-								+ videoId;
-						final String downloadResult = executeCommand(downloadCmd);
-						downloadSuccessfull = downloadResult.contains("Deleting original file");
-						if (!downloadSuccessfull) {
-							if (retries < MAX_RETRIES) {
-								retries++;
-								download();
-								return;
-							} else {
-								new Logger().log(Logger.LOG_ERROR, downloadResult);
-								abortRequest("Could not download " + videoId);
-								sem.release();
-								return;
-							}
-						}
-						/*
-						 * Move files to final folder
-						 */
-						final File thumbnailFile = new File(TEMP_DIR + videoId + ".jpg");
-						if (thumbnailFile.exists() && getTemporaryFile().exists()) {
-							try {
-								getTemporaryFile().renameTo(new File(FINAL_DIR + getTemporaryFile().getName()));
-								resizeThumbnail(thumbnailFile.getCanonicalPath());
-								thumbnailFile.renameTo(new File(FINAL_DIR + thumbnailFile.getName()));
-								writeTitleToFile();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-					}
-					sem.release();
-					return;
+			while (retries < MAX_RETRIES) {
+				/*
+				 * Semaphore released only when the download finishes (with error or not).
+				 */
+				final Semaphore sem = new Semaphore(0);
+				final Thread t = new DownloadThread(sem);
+				t.start();
+				boolean timedOut = true;
+				try {
+					timedOut = !sem.tryAcquire(CONVERSION_TIMEOUT_MINS, TimeUnit.MINUTES);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-
-				private void resizeThumbnail(String imagePath) throws IOException {
-					final File destFile = new File(imagePath);
-					final BufferedImage img = ImageIO.read(destFile);
-					final Double proportion = new Double(img.getWidth()) / new Double(img.getHeight());
-					final BufferedImage scaledImg = Scalr.resize(img, Mode.AUTOMATIC, THUMBNAIL_SIZE_PX,
-							(int) Math.round(proportion * THUMBNAIL_SIZE_PX));
-					ImageIO.write(scaledImg, "jpg", destFile);
-				}
-			};
-			t.start();
-			boolean timedOut = true;
-			try {
-				timedOut = !sem.tryAcquire(CONVERSION_TIMEOUT_MINS, TimeUnit.MINUTES);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			if (timedOut) {
-				t.interrupt();
-				t.stop();
-				if (retries < MAX_RETRIES) {
-					retries++;
-					download();
+				if (timedOut) {
+					t.interrupt();
+					t.stop();
+					if (retries >= MAX_RETRIES) {
+						abortRequest("Could not download " + videoId + " because it timed out.");
+					} else {
+						retries++;
+					}
 				} else {
-					abortRequest("Could not download " + videoId + " because timeout.");
-					removeRequestFromQueue();
+					break;
 				}
 			}
-			if (aborted) {
-				moveToAbortedRequestsList(this);
-			} else {
-				removeRequestFromQueue();
-			}
+			moveToCompletedRequestsList(this);
 		}
 
-		private String executeCommand(String command) {
-			final StringBuilder output = new StringBuilder();
-			try {
-				Process p = Runtime.getRuntime().exec(command);
-				BufferedReader reader1 = new BufferedReader(new InputStreamReader(p.getInputStream()));
-				byte c;
-				while ((c = (byte) reader1.read()) != -1) {
-					output.append(new String(new byte[] { c }, "UTF-8"));
-				}
-				final String protectedStr = output.toString().replace("\\n", "").replace("\\r", "").replace("\\\"", "\\\\\"");
-				// output.append("exit code: " + p.waitFor() + "\n");
-				return StringEscapeUtils.unescapeJava(protectedStr);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-
-		private boolean getMetadata() {
-			try {
-				final String metadataCmd = "youtube-dl "
-						+ "--dump-json "
-						+ "https://www.youtube.com/watch?v="
-						+ videoId;
-				final String tmp = executeCommand(metadataCmd);
-				final JSONObject metadataResult = new JSONObject(tmp);
-				this.title = metadataResult.getString("title");
-				this.duration = (int) Math.round(metadataResult.getInt("duration") / 60.0);
-				return true;
-			} catch (Exception e) {
-				abortRequest(e.getMessage() + " Is the video id correct?");
-				e.printStackTrace();
-				return false;
-			}
-		}
-
-		private File getTemporaryFile() {
-			return new File(TEMP_DIR + videoId + ".mp3");
-		}
-
-		private boolean isMP3FileAlreadyCreated() {
-			return this.getMP3File().exists();
-		}
-
-		private void moveToAbortedRequestsList(VideoRequest vr) {
+		private void moveToCompletedRequestsList(VideoRequest vr) {
 			synchronized (lock) {
 				requestsQueue.remove(videoId);
-				abortedRequests.put(videoId, vr);
+				completedRequests.put(videoId, vr);
 			}
-		}
-
-		private void removeRequestFromQueue() {
-			synchronized (lock) {
-				requestsQueue.remove(videoId);
-			}
-		}
-
-		private void touchFile() {
-			this.getMP3File().setLastModified(System.currentTimeMillis());
-		}
-
-		private void writeTitleToFile() throws Exception {
-			PrintWriter writer = new PrintWriter(FINAL_DIR + videoId + ".txt", "UTF-8");
-			writer.println(title);
-			writer.close();
 		}
 
 		public String getAbortedMessage() {
@@ -316,8 +271,12 @@ public final class ServicesProvider {
 			return abortedTimestamp;
 		}
 
-		public File getMP3File() {
-			return new File(FINAL_DIR + videoId + ".mp3");
+		public String getCoverUrl() {
+			return coverUrl;
+		}
+
+		public String getMp3Url() {
+			return mp3Url;
 		}
 
 		public String getTitle() {
@@ -325,10 +284,12 @@ public final class ServicesProvider {
 		}
 
 		public boolean isDownloadingAlready() {
-			return requestsQueue.get(this.videoId) != null;
+			synchronized (lock) {
+				return requestsQueue.get(this.videoId) != null;
+			}
 		}
 
-		public boolean isMP3FileReady() {
+		public boolean isReady() {
 			return this.ready;
 		}
 
@@ -336,8 +297,10 @@ public final class ServicesProvider {
 			return this.aborted;
 		}
 
-		public boolean wasAbortedAlready() {
-			return abortedRequests.get(this.videoId) != null;
+		public VideoRequest wasPreviouslyHandled() {
+			synchronized (lock) {
+				return completedRequests.get(this.videoId);
+			}
 		}
 	}
 
@@ -361,22 +324,22 @@ public final class ServicesProvider {
 			configureRestForm(this);
 			JSONObject response = new JSONObject();
 			final String videoId = getRequest().getAttributes().get("video_id").toString();
-			if (videoId == null || videoId == "") {
+			if (videoId == null || videoId.equals("")) {
 				response.put("error", "Invalid video id!");
 				return response.toString(4);
 			} else {
 				final VideoRequest vr = new VideoRequest(videoId);
-				if (vr.isMP3FileReady() && !vr.wasAborted()) {
-					response.put("ready", "The file can be downloaded.");
-					response.put("url", "http://wavedomotics.com/" + videoId + ".mp3");
-					response.put("cover", "http://wavedomotics.com/" + videoId + ".jpg");
+				if (vr.isReady() && !vr.wasAborted()) {
+					response.put("ready", "The request was fulfilled.");
+					response.put("url", vr.getMp3Url());
+					response.put("cover", vr.getCoverUrl());
 					response.put("title", vr.getTitle());
 					return response.toString(4);
-				} else if (vr.isMP3FileReady() && vr.wasAborted()) {
+				} else if (vr.isReady() && vr.wasAborted()) {
 					response.put("error", vr.getAbortedMessage());
 					return response.toString(4);
 				} else {
-					response.put("scheduled", "Wait until the mp3 is cached.");
+					response.put("scheduled", "Wait until the request is fulfilled.");
 					return response.toString(4);
 				}
 			}
