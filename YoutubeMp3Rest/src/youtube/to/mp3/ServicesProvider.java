@@ -21,11 +21,10 @@ import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomNode;
-import com.gargoylesoftware.htmlunit.html.DomNodeList;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public final class ServicesProvider {
@@ -61,37 +60,34 @@ public final class ServicesProvider {
 			}
 
 			private boolean fetchVideoInfoFromServer() throws Exception {
-				// LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
-				// "org.apache.commons.logging.impl.NoOpLog");
-				// java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
-				// java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
+				LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
+						"org.apache.commons.logging.impl.NoOpLog");
+				java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
+				java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
 
 				WebClient webClient = null;
 				try {
 					webClient = new WebClient(BrowserVersion.FIREFOX_38);
 					webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+					webClient.getOptions().setJavaScriptEnabled(true);
+					webClient.getOptions().setRedirectEnabled(true);
 
-					final HtmlPage page = webClient.getPage("http://www.youtube-mp3.org/");
-					final HtmlForm form = (HtmlForm) getElementById(page, "form", "submit-form");
-					final HtmlTextInput textField = (HtmlTextInput) getElementById(form, "input", "youtube-url");
-					final HtmlSubmitInput button = (HtmlSubmitInput) getElementById(form, "input", "submit");
+					final HtmlPage page = webClient.getPage("http://www.youtube2mp3.cc");
+
+					final HtmlTextInput textField = (HtmlTextInput) page.getElementById("video");
+					final HtmlButton button = (HtmlButton) page.getElementById("button");
+					final HtmlAnchor an = (HtmlAnchor) page.getElementById("download");
 
 					textField.setValueAttribute("https://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
 					button.click();
 
-					DomNodeList<HtmlElement> a = page.getElementById("dl_link").getElementsByTagName("a");
-					for (HtmlElement e : a) {
-						if (!e.hasAttribute("style")) {
-							VideoRequest.this.mp3Url = "http://www.youtube-mp3.org"
-									+ e.getAttribute("href").toString();
-							System.out.println("================= " + mp3Url);
-						}
+					while (!an.getAttribute("href").toString().contains("http")) {
+						Thread.sleep(1000);
 					}
-					a = page.getElementById("image").getElementsByTagName("img");
-					for (HtmlElement e : a) {
-						VideoRequest.this.coverUrl = e.getAttribute("src");
-					}
-					VideoRequest.this.title = page.getElementById("title").asText().substring(7);
+
+					VideoRequest.this.mp3Url = an.getAttribute("href").toString();
+					VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
+					VideoRequest.this.title = page.getElementById("title").asText();
 				} catch (ElementNotFoundException e) {
 					new Logger().log(Logger.LOG_ERROR, "Error scraping the website. " + e.getMessage());
 					e.printStackTrace();
