@@ -56,6 +56,7 @@ public class PlayerService extends Service {
     private static String sStreamCoverUrl;
     private static String sStreamTitle;
     private static Bitmap sCover;
+    private static String sYtUrl;
     private RemoteViews mSmallNotificationView;
     private boolean mShowingNotification;
     private Notification mNotification;
@@ -89,8 +90,14 @@ public class PlayerService extends Service {
         Log.i(TAG, "On start command invoked: " + intent);
         if (intent.getExtras() != null) {
             createLoadingNotification();
-            final String ytUrl = parseVideoId(intent.getExtras().getString("ytUrl"));
-            final Thread downloadTask = new RequestMp3Task(ytUrl);
+            sYtUrl = parseVideoId(intent.getExtras().getString("ytUrl"));
+            final Thread downloadTask = new RequestMp3Task(sYtUrl, new Runnable() {
+                @Override
+                public void run() {
+                    PlayerService.this.start();
+                    new DownloadImageTask().execute(sStreamCoverUrl);
+                }
+            });
             downloadTask.start();
         } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
             playPause();
@@ -192,9 +199,17 @@ public class PlayerService extends Service {
     public void download() {
         final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         getApplicationContext().sendBroadcast(it);
-        final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
-        browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(browserIntent);
+        showToast("The download will start shortly.");
+        final Thread downloadTask = new RequestMp3Task(sYtUrl, new Runnable() {
+            @Override
+            public void run() {
+                final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
+                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(browserIntent);
+            }
+        });
+        downloadTask.start();
+
     }
 
     public void halveVolume() {
@@ -225,7 +240,7 @@ public class PlayerService extends Service {
         startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
 
-    public void drawCover(){
+    public void drawCover() {
         mSmallNotificationView
                 .setImageViewBitmap(R.id.notification_small_imageview_albumart,
                         sCover);
@@ -237,7 +252,7 @@ public class PlayerService extends Service {
         updateNotification();
     }
 
-    public void drawPlayPause(){
+    public void drawPlayPause() {
         if (mMediaPlayer.isPlaying()) {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_playpause,
@@ -260,7 +275,7 @@ public class PlayerService extends Service {
         updateNotification();
     }
 
-    public void drawLoop(){
+    public void drawLoop() {
         if (mMediaPlayer.isLooping()) {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_loop,
@@ -283,7 +298,7 @@ public class PlayerService extends Service {
         updateNotification();
     }
 
-    public void updateNotification(){
+    public void updateNotification() {
         mNotification.contentView = mSmallNotificationView;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mNotification.bigContentView = mLargeNotificationView;
@@ -291,6 +306,7 @@ public class PlayerService extends Service {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
+
     public void createNotification() {
         if (mShowingNotification) {
             Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
@@ -387,17 +403,19 @@ public class PlayerService extends Service {
                 case AudioManager.AUDIOFOCUS_GAIN:
                     Log.i(TAG, "AUDIOFOCUS_GAIN");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    // returnVolumeToNormal();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
                     Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    // returnVolumeToNormal();
+                    play();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
                     Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
                     // Set volume level to desired levels
-                    returnVolumeToNormal();
+                    // returnVolumeToNormal();
+                    play();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
                     Log.e(TAG, "AUDIOFOCUS_LOSS");
@@ -407,12 +425,12 @@ public class PlayerService extends Service {
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                     Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
                     // Lower the volume
-                    halveVolume();
+                    pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                     Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
                     // Lower the volume
-                    halveVolume();
+                    pause();
                     break;
             }
         }
@@ -421,9 +439,11 @@ public class PlayerService extends Service {
     class RequestMp3Task extends Thread {
 
         private final String videoId;
+        private final Runnable onSuccess;
 
-        public RequestMp3Task(String videoId) {
+        public RequestMp3Task(String videoId, Runnable onSuccess) {
             this.videoId = videoId;
+            this.onSuccess = onSuccess;
         }
 
         @Override
@@ -457,8 +477,7 @@ public class PlayerService extends Service {
                             sStreamCoverUrl = jsonObject.getString("cover");
                             sStreamTitle = jsonObject.getString("title");
                             Log.i(TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
-                            PlayerService.this.start();
-                            new DownloadImageTask().execute(sStreamCoverUrl);
+                            onSuccess.run();
                             return;
                         } else if (jsonObject.has("error")) {
                             final String errorMsg = jsonObject.getString("error");
@@ -479,34 +498,34 @@ public class PlayerService extends Service {
                 exit();
             }
         }
+    }
 
-        private class DownloadImageTask extends AsyncTask<String, Void, Void> {
-
+    private void showToast(final String message) {
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
             @Override
-            protected Void doInBackground(String... urls) {
-                String coverUrl = urls[0];
-                Bitmap cover = null;
-                try {
-                    InputStream in = new java.net.URL(coverUrl).openStream();
-                    cover = BitmapFactory.decodeStream(in);
-                } catch (Exception e) {
-                    Log.e("Error", e.getMessage());
-                    e.printStackTrace();
-                }
-                sCover = cover;
-                drawCover();
-                return null;
+            public void run() {
+                Toast.makeText(PlayerService.this.getApplicationContext(), message, Toast.LENGTH_LONG).show();
             }
-        }
+        });
+    }
 
-        private void showToast(final String message) {
-            Handler handler = new Handler(Looper.getMainLooper());
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(PlayerService.this.getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
-            });
+    private final class DownloadImageTask extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... urls) {
+            String coverUrl = urls[0];
+            Bitmap cover = null;
+            try {
+                InputStream in = new java.net.URL(coverUrl).openStream();
+                cover = BitmapFactory.decodeStream(in);
+            } catch (Exception e) {
+                Log.e("Error", e.getMessage());
+                e.printStackTrace();
+            }
+            sCover = cover;
+            drawCover();
+            return null;
         }
     }
 

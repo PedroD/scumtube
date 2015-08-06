@@ -20,10 +20,8 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
@@ -82,6 +80,11 @@ public final class ServicesProvider {
 					button.click();
 
 					while (!an.getAttribute("href").toString().contains("http")) {
+						try {
+							page.getElementById("error");
+							return false;
+						} catch (Exception e) {
+						}
 						Thread.sleep(1000);
 					}
 
@@ -107,10 +110,6 @@ public final class ServicesProvider {
 
 			}
 
-			private HtmlElement getElementById(DomNode n, String tag, String id) {
-				return n.getFirstByXPath("//" + tag + "[@id='" + id + "']");
-			}
-
 			@Override
 			public void run() {
 				boolean success = false;
@@ -129,7 +128,7 @@ public final class ServicesProvider {
 				}
 				if (!success) {
 					VideoRequest.this.abortRequest(
-							"There was an error connecting Youtube or the video length is greater than 20 minutes.");
+							"There was an error connecting Youtube or the video length is greater than 120 minutes.");
 				}
 				sem.release();
 				return;
