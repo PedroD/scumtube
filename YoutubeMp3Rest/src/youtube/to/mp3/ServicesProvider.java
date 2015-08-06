@@ -30,7 +30,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 public final class ServicesProvider {
 
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
-	private static final int MAX_MINUTES_STORING_ABORTED_REQUEST = 20;
+	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 3;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
@@ -155,14 +155,14 @@ public final class ServicesProvider {
 			public void run() {
 				try {
 					while (true) {
-						Thread.sleep(Math.round(MAX_MINUTES_STORING_ABORTED_REQUEST / 2.0) * 60000);
+						Thread.sleep(Math.round(MAX_MINUTES_STORING_RESOLVED_REQUEST / 2.0) * 60000);
 						synchronized (lock) {
 							final List<String> toRemove = new ArrayList<String>();
 
 							for (Map.Entry<String, VideoRequest> vr : completedRequests.entrySet()) {
 								final long delta = TimeUnit.MILLISECONDS
 										.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
-								if (delta >= MAX_MINUTES_STORING_ABORTED_REQUEST) {
+								if (delta >= MAX_MINUTES_STORING_RESOLVED_REQUEST) {
 									toRemove.add(vr.getKey());
 									new Logger().log(Logger.LOG_INFO, "Removed old aborted request " + vr.getKey() + ".");
 								}
