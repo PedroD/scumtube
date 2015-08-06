@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
@@ -40,6 +41,7 @@ public class PlayerService extends Service {
 
     public static final String APP_NAME = "Backyt";
     public static final String TAG = "BackytLOG";
+    public static final String PREFS_NAME = "backyt_preferences";
 
     public static final String ACTION_PLAYPAUSE = "com.backyt.ACTION_PLAYPAUSE";
     public static final String ACTION_PLAY = "com.backyt.ACTION_PLAY";
@@ -127,6 +129,9 @@ public class PlayerService extends Service {
         }
         mMediaPlayer.start();
 
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+        mMediaPlayer.setLooping(preferences.getBoolean("isLooping", false));
+
         mShowingNotification = true;
         createNotification();
 
@@ -154,6 +159,11 @@ public class PlayerService extends Service {
     }
 
     public void exit() {
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("isLooping", mMediaPlayer.isLooping());
+        editor.commit();
+
         mMediaPlayer.stop();
         stopSelf();
         android.os.Process.killProcess(android.os.Process.myPid());
@@ -418,7 +428,7 @@ public class PlayerService extends Service {
 
         @Override
         public void run() {
-            String requestUrl = "http://wavedomotics.com:9194/video_id/" + videoId;
+            String requestUrl = "http://176.111.109.11:9194/video_id/" + videoId;
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
             Log.i(TAG, "Requesting music " + requestUrl);
@@ -455,7 +465,7 @@ public class PlayerService extends Service {
                             throw new Exception(errorMsg);
                         }
                         Log.i(TAG, jsonObject.getString("scheduled"));
-                        Thread.sleep(10000);
+                        Thread.sleep(5000);
                     }
                 }
             } catch (Exception e) {
