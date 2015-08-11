@@ -6,4 +6,5 @@
     <string name="title_activity_notification_return_slot">NotificationReturnSlot</string>
     <string name="loading">Your music is loading. Please wait.</string>
     <string name="loading_advice">Please don\'t turn off your internet connection.</string>
+    <string name="title_activity_history">HistoryActivity</string>
 </resources>

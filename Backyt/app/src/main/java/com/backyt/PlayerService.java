@@ -20,6 +20,7 @@ import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -29,19 +30,27 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 
 public class PlayerService extends Service {
 
     public static final String APP_NAME = "Backyt";
     public static final String TAG = "BackytLOG";
+
     public static final String PREFS_NAME = "backyt_preferences";
+    public static final String PREFS_ISLOOPING = "isLooping";
+    public static final String PREFS_MUSICLIST = "MusicList";
+
 
     public static final String ACTION_PLAYPAUSE = "com.backyt.ACTION_PLAYPAUSE";
     public static final String ACTION_PLAY = "com.backyt.ACTION_PLAY";
@@ -56,6 +65,7 @@ public class PlayerService extends Service {
     private static String sStreamCoverUrl;
     private static String sStreamTitle;
     private static Bitmap sCover;
+    private static String sYtVideoId;
     private static String sYtUrl;
     private RemoteViews mSmallNotificationView;
     private boolean mShowingNotification;
@@ -90,8 +100,9 @@ public class PlayerService extends Service {
         Log.i(TAG, "On start command invoked: " + intent);
         if (intent.getExtras() != null) {
             createLoadingNotification();
-            sYtUrl = parseVideoId(intent.getExtras().getString("ytUrl"));
-            final Thread downloadTask = new RequestMp3Task(sYtUrl, new Runnable() {
+            sYtUrl = intent.getExtras().getString("ytUrl");
+            sYtVideoId = parseVideoId(sYtUrl);
+            final Thread downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
                 @Override
                 public void run() {
                     PlayerService.this.start();
@@ -136,8 +147,7 @@ public class PlayerService extends Service {
         }
         mMediaPlayer.start();
 
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
-        mMediaPlayer.setLooping(preferences.getBoolean("isLooping", false));
+        loadIsLooping();
 
         mShowingNotification = true;
         createNotification();
@@ -166,11 +176,6 @@ public class PlayerService extends Service {
     }
 
     public void exit() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("isLooping", mMediaPlayer.isLooping());
-        editor.commit();
-
         mMediaPlayer.stop();
         stopSelf();
         android.os.Process.killProcess(android.os.Process.myPid());
@@ -179,6 +184,7 @@ public class PlayerService extends Service {
     public void loop() {
         mMediaPlayer.setLooping(!mMediaPlayer.isLooping());
         drawLoop();
+        saveIsLooping();
     }
 
     public void playPause() {
@@ -200,7 +206,7 @@ public class PlayerService extends Service {
         final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         getApplicationContext().sendBroadcast(it);
         showToast("The download will start shortly.");
-        final Thread downloadTask = new RequestMp3Task(sYtUrl, new Runnable() {
+        final Thread downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
             @Override
             public void run() {
                 final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
@@ -209,7 +215,6 @@ public class PlayerService extends Service {
             }
         });
         downloadTask.start();
-
     }
 
     public void halveVolume() {
@@ -484,7 +489,7 @@ public class PlayerService extends Service {
                             throw new Exception(errorMsg);
                         }
                         Log.i(TAG, jsonObject.getString("scheduled"));
-                        Thread.sleep(5000);
+                        Thread.sleep(2000);
                     }
                 }
             } catch (Exception e) {
@@ -525,8 +530,61 @@ public class PlayerService extends Service {
             }
             sCover = cover;
             drawCover();
+            updateMusicList();
             return null;
         }
+    }
+
+    public void updateMusicList(){
+        MusicList.addFirst(new Music(sStreamTitle, sCover, sYtUrl));
+        saveMusicList();
+    }
+
+    public void saveMusicList(){
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        ArrayList<Music> a = MusicList.getMusicArrayList();
+        JSONArray musicJsonArray = new JSONArray();
+        for(Music m : a){
+            JSONObject musicJsonObject = new JSONObject();
+            try {
+                musicJsonObject.put("title", m.getTitle());
+                musicJsonObject.put("cover", encodeBitmapTobase64(m.getCover()));
+                musicJsonObject.put("ytUrl", m.getYtUrl());
+                musicJsonArray.put(musicJsonObject);
+                Log.i(TAG, "MUSICA " + musicJsonObject.toString());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        Log.d(TAG, "Save array: " + musicJsonArray.toString());
+        editor.putString(PREFS_MUSICLIST, musicJsonArray.toString());
+        editor.commit();
+
+    }
+
+    public static String encodeBitmapTobase64(Bitmap image)
+    {
+        Bitmap imagex=image;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] b = baos.toByteArray();
+        String imageEncoded = Base64.encodeToString(b,Base64.DEFAULT);
+
+        Log.i(TAG, "Cover encoded: " + imageEncoded);
+        return imageEncoded;
+    }
+
+    public void saveIsLooping() {
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(PREFS_ISLOOPING, mMediaPlayer.isLooping());
+        editor.commit();
+    }
+
+    public void loadIsLooping() {
+        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+        mMediaPlayer.setLooping(preferences.getBoolean(PREFS_ISLOOPING, false));
     }
 
     private class PhoneCallListener extends PhoneStateListener {

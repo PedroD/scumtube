@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    package="com.backyt"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.backyt" >
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/loading_0"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <activity
             android:name=".PlayerActivity"
             android:excludeFromRecents="true"
@@ -18,33 +17,40 @@
             android:label="@string/app_name"
             android:noHistory="true"
             android:stateNotNeeded="true"
-            android:theme="@android:style/Theme.NoDisplay">
-            <intent-filter android:label="Background Play" android:icon="@drawable/notification_template_icon_bg">
-                <category android:name="android.intent.category.LAUNCHER"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+            android:theme="@android:style/Theme.NoDisplay" >
 
-                <action android:name="android.intent.action.MAIN"/>
-                <action android:name="android.intent.action.SEND"/>
-
-                <data
-                    android:host="www.youtube.com"
-                    android:mimeType="text/*"/>
-            </intent-filter>
         </activity>
 
         <service
             android:name=".PlayerService"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true" >
             <intent-filter>
-                <action android:name="com.backyt.ACTION_PLAYPAUSE"/>
-                <action android:name="com.backyt.ACTION_PLAY"/>
-                <action android:name="com.backyt.ACTION_PAUSE"/>
-                <action android:name="com.backyt.ACTION_LOOP"/>
-                <action android:name="com.backyt.ACTION_EXIT"/>
+                <action android:name="com.backyt.ACTION_PLAYPAUSE" />
+                <action android:name="com.backyt.ACTION_PLAY" />
+                <action android:name="com.backyt.ACTION_PAUSE" />
+                <action android:name="com.backyt.ACTION_LOOP" />
+                <action android:name="com.backyt.ACTION_EXIT" />
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".HistoryActivity"
+            android:label="@string/title_activity_history" >
+            <intent-filter
+                android:icon="@drawable/notification_template_icon_bg"
+                android:label="Background Play" >
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.SEND" />
+
+                <data
+                    android:host="www.youtube.com"
+                    android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
