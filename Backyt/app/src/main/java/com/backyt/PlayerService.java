@@ -76,6 +76,7 @@ public class PlayerService extends Service {
     private RemoteViews mSmallLoadingNotificationView;
     private MediaPlayer mMediaPlayer = new MediaPlayer();
     private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
+    private final AudioManagerListener mAudioFocusListener = new AudioManagerListener();
 
     public PlayerService() {
     }
@@ -100,9 +101,11 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "On start command invoked: " + intent);
-        if(mMediaPlayer.isPlaying()) {
+
+        // WTF? retarded?
+        /*if (mMediaPlayer.isPlaying()) {
             mMediaPlayer.stop();
-        }
+        }*/
 
         if (intent.getExtras() != null) {
             createLoadingNotification();
@@ -164,7 +167,7 @@ public class PlayerService extends Service {
         final AudioManager am = (AudioManager) getApplicationContext()
                 .getSystemService(Context.AUDIO_SERVICE);
         // Request audio focus for play back
-        final int result = am.requestAudioFocus(new AudioManagerListener(),
+        final int result = am.requestAudioFocus(mAudioFocusListener,
                 // Use the music stream.
                 AudioManager.STREAM_MUSIC,
                 // Request permanent focus.
@@ -540,25 +543,25 @@ public class PlayerService extends Service {
         }
     }
 
-    public void updateMusicList(){
+    public void updateMusicList() {
         MusicList.addFirst(new Music(sStreamTitle, sCover, sYtUrl));
         notifyHistoryActivity();
         saveMusicList();
     }
 
-    public void notifyHistoryActivity(){
-        Intent intent =  new Intent(this, HistoryActivity.class);
+    public void notifyHistoryActivity() {
+        Intent intent = new Intent(this, HistoryActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(Intent.EXTRA_TEXT, EXTRA_DATASETCHANGED);
         startActivity(intent);
     }
 
-    public void saveMusicList(){
+    public void saveMusicList() {
         SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
         ArrayList<Music> a = MusicList.getMusicArrayList();
         JSONArray musicJsonArray = new JSONArray();
-        for(Music m : a){
+        for (Music m : a) {
             JSONObject musicJsonObject = new JSONObject();
             try {
                 musicJsonObject.put("title", m.getTitle());
@@ -574,13 +577,12 @@ public class PlayerService extends Service {
 
     }
 
-    public static String encodeBitmapTobase64(Bitmap image)
-    {
-        Bitmap imagex=image;
+    public static String encodeBitmapTobase64(Bitmap image) {
+        Bitmap imagex = image;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         //imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] b = baos.toByteArray();
-        String imageEncoded = Base64.encodeToString(b,Base64.DEFAULT);
+        String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
         return imageEncoded;
     }
 
