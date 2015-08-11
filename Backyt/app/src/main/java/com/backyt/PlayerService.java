@@ -546,18 +546,23 @@ public class PlayerService extends Service {
 
         @Override
         protected Void doInBackground(String... urls) {
-            String coverUrl = urls[0];
-            Bitmap cover = null;
             try {
-                InputStream in = new java.net.URL(coverUrl).openStream();
-                cover = BitmapFactory.decodeStream(in);
+                String coverUrl = urls[0];
+                Bitmap cover = null;
+                try {
+                    InputStream in = new java.net.URL(coverUrl).openStream();
+                    cover = BitmapFactory.decodeStream(in);
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                    e.printStackTrace();
+                }
+                sCover = cover;
+                drawCover();
+                updateMusicList();
             } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                e.printStackTrace();
+                if (e.getMessage() != null)
+                    Log.i(TAG, e.getMessage());
             }
-            sCover = cover;
-            drawCover();
-            updateMusicList();
             return null;
         }
     }
