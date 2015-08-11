@@ -59,6 +59,8 @@ public class PlayerService extends Service {
     public static final String ACTION_LOOP = "com.backyt.ACTION_LOOP";
     public static final String ACTION_DOWNLOAD = "com.backyt.ACTION_DOWNLOAD";
 
+    public static final String EXTRA_DATASETCHANGED = "Data Set Changed";
+
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
     private static boolean sIsVolumeHalved = false;
     private static String sStreamMp3Url;
@@ -178,7 +180,6 @@ public class PlayerService extends Service {
     public void exit() {
         mMediaPlayer.stop();
         stopSelf();
-        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     public void loop() {
@@ -537,7 +538,15 @@ public class PlayerService extends Service {
 
     public void updateMusicList(){
         MusicList.addFirst(new Music(sStreamTitle, sCover, sYtUrl));
+        notifyHistoryActivity();
         saveMusicList();
+    }
+
+    public void notifyHistoryActivity(){
+        Intent intent =  new Intent(this, HistoryActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(Intent.EXTRA_TEXT, EXTRA_DATASETCHANGED);
+        startActivity(intent);
     }
 
     public void saveMusicList(){
@@ -552,12 +561,10 @@ public class PlayerService extends Service {
                 musicJsonObject.put("cover", encodeBitmapTobase64(m.getCover()));
                 musicJsonObject.put("ytUrl", m.getYtUrl());
                 musicJsonArray.put(musicJsonObject);
-                Log.i(TAG, "MUSICA " + musicJsonObject.toString());
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        Log.d(TAG, "Save array: " + musicJsonArray.toString());
         editor.putString(PREFS_MUSICLIST, musicJsonArray.toString());
         editor.commit();
 
@@ -570,8 +577,6 @@ public class PlayerService extends Service {
         imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] b = baos.toByteArray();
         String imageEncoded = Base64.encodeToString(b,Base64.DEFAULT);
-
-        Log.i(TAG, "Cover encoded: " + imageEncoded);
         return imageEncoded;
     }
 
@@ -600,13 +605,11 @@ public class PlayerService extends Service {
                         pause();
                     }
                     break;
-
                 case TelephonyManager.CALL_STATE_IDLE:
                     if (mStartCallTime > 0 && (System.currentTimeMillis() - mStartCallTime
                             < 30000)) {
                         start();
                     }
-
                     mStartCallTime = 0L;
                     break;
             }

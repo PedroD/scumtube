@@ -18,7 +18,15 @@
             android:noHistory="true"
             android:stateNotNeeded="true"
             android:theme="@android:style/Theme.NoDisplay" >
-
+            <intent-filter
+                android:icon="@drawable/notification_template_icon_bg"
+                android:label="Background Play" >
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.SEND" />
+                <data
+                    android:host="www.youtube.com"
+                    android:mimeType="text/*" />
+            </intent-filter>
         </activity>
 
         <service
@@ -41,14 +49,7 @@
                 android:icon="@drawable/notification_template_icon_bg"
                 android:label="Background Play" >
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.SEND" />
-
-                <data
-                    android:host="www.youtube.com"
-                    android:mimeType="text/*" />
             </intent-filter>
         </activity>
     </application>

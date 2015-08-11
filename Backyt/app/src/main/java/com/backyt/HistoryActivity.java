@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,21 +31,15 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getIntent().getExtras() != null) {
             final Bundle extras = getIntent().getExtras();
-            final String ytUrl = extras.getString(Intent.EXTRA_TEXT);
-            if (ytUrl != null && ytUrl.contains("http")) {
-                final Intent playerService = new Intent(this, PlayerService.class);
-                playerService.putExtra("ytUrl", ytUrl);
-                startService(playerService);
-                moveTaskToBack(true);
+            final String extraText = extras.getString(Intent.EXTRA_TEXT);
+            if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
+                adapter.notifyDataSetChanged();
                 finish();
-            } else {
-                Toast.makeText(getApplicationContext(), "Error: Wrong URL (" + ytUrl + ")!", Toast.LENGTH_LONG).show();
             }
-        } else {
-            // Toast.makeText(getApplicationContext(), "An error occurred!", Toast.LENGTH_LONG).show();
-
+        } else{
             loadMusicList();
 
             setContentView(R.layout.activity_history);
@@ -66,18 +58,9 @@ public class HistoryActivity extends AppCompatActivity {
                     final Intent playerService = new Intent(HistoryActivity.this, PlayerService.class);
                     playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
                     startService(playerService);
-                    finish();
                 }
             });
         }
-
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        adapter.notifyDataSetChanged();
     }
 
     private class MusicArrayAdapter extends ArrayAdapter<Music> {
@@ -86,33 +69,6 @@ public class HistoryActivity extends AppCompatActivity {
         public MusicArrayAdapter(Context context, int textViewResourceId, ArrayList<Music> objects) {
             super(context, textViewResourceId, objects);
         }
-
-      /*  @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            View view = convertView;
-
-            if (view == null) {
-                LayoutInflater viewInflater;
-                viewInflater = LayoutInflater.from(getContext());
-                view = viewInflater.inflate(R.layout.history_item, null);
-            }
-
-            Music item = getItem(position);
-
-            if (item != null) {
-                ImageView cover = (ImageView) view.findViewById(R.id.history_item_cover);
-                TextView title = (TextView) view.findViewById(R.id.history_item_title);
-
-                if (cover != null) {
-                    cover.setImageBitmap(item.getCover());
-                }
-
-                if (title != null) {
-                    title.setText(item.getTitle());
-                }
-            }
-            return view;
-        }*/
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
@@ -136,8 +92,6 @@ public class HistoryActivity extends AppCompatActivity {
 
             Music item = getItem(position);
 
-            Log.i(PlayerService.TAG, item.getTitle() + " position:" + position);
-
             holder.cover.setImageBitmap(item.getCover());
             holder.title.setText(item.getTitle());
             return v;
@@ -151,14 +105,12 @@ public class HistoryActivity extends AppCompatActivity {
 
 
     public void loadMusicList() {
-        if(MusicList.getMusicArrayList().isEmpty()) {
+        if (MusicList.getMusicArrayList().isEmpty()) {
             SharedPreferences preferences = getSharedPreferences(PlayerService.PREFS_NAME, Context.MODE_PRIVATE);
             String musicJsonArrayString = preferences.getString(PlayerService.PREFS_MUSICLIST, null);
             if (musicJsonArrayString != null) {
                 try {
-                    Log.d(PlayerService.TAG, "Load array string: " + musicJsonArrayString);
                     JSONArray musicJsonArray = new JSONArray(musicJsonArrayString);
-                    Log.d(PlayerService.TAG, "Load array: " + musicJsonArray.toString());
                     for (int i = 0; i < musicJsonArray.length(); i++) {
                         JSONObject musicJsonObject = (JSONObject) musicJsonArray.get(i);
                         MusicList.add(new Music((String) musicJsonObject.get("title"),
@@ -176,6 +128,4 @@ public class HistoryActivity extends AppCompatActivity {
         byte[] decodedByte = Base64.decode(input, 0);
         return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
     }
-
-
 }
