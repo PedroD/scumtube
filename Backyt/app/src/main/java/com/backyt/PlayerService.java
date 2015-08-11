@@ -115,8 +115,13 @@ public class PlayerService extends Service {
             final Thread downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
                 @Override
                 public void run() {
-                    PlayerService.this.start();
-                    new DownloadImageTask().execute(sStreamCoverUrl);
+                    try {
+                        PlayerService.this.start();
+                        new DownloadImageTask().execute(sStreamCoverUrl);
+                    } catch (Exception e) {
+                        if (e.getMessage() != null)
+                            Log.i(TAG, e.getMessage());
+                    }
                 }
             });
             downloadTask.start();
