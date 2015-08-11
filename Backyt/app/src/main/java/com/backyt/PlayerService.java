@@ -85,6 +85,7 @@ public class PlayerService extends Service {
 
     @Override
     public void onCreate() {
+        Log.i(TAG, "On create invoked.");
         super.onCreate();
 
         // Initialize PhoneCallListener
@@ -120,7 +121,8 @@ public class PlayerService extends Service {
             });
             downloadTask.start();
         } else if (intent.getAction().equals(ACTION_EXITLOADING)) {
-
+            android.os.Process.killProcess(android.os.Process.myPid());
+            return START_NOT_STICKY;
         } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
             playPause();
         } else if (intent.getAction().equals(ACTION_PLAY)) {
@@ -260,7 +262,6 @@ public class PlayerService extends Service {
                 .setContent(mSmallLoadingNotificationView);
 
         mNotification = builder.build();
-
 
 
         startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
