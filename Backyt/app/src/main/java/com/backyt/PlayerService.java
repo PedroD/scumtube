@@ -547,10 +547,12 @@ public class PlayerService extends Service {
     }
 
     public void notifyHistoryActivity(){
-        Intent intent =  new Intent(this, HistoryActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.putExtra(Intent.EXTRA_TEXT, EXTRA_DATASETCHANGED);
-        startActivity(intent);
+        if(HistoryActivity.hasView) {
+            Intent intent = new Intent(this, HistoryActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.putExtra(Intent.EXTRA_TEXT, EXTRA_DATASETCHANGED);
+            startActivity(intent);
+        }
     }
 
     public void saveMusicList(){
@@ -576,9 +578,9 @@ public class PlayerService extends Service {
 
     public static String encodeBitmapTobase64(Bitmap image)
     {
-        Bitmap imagex=image;
+        Bitmap imagex = image;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        imagex.compress(Bitmap.CompressFormat.PNG, 100, baos);
         byte[] b = baos.toByteArray();
         String imageEncoded = Base64.encodeToString(b,Base64.DEFAULT);
         return imageEncoded;

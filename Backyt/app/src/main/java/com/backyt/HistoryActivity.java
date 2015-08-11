@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,36 +28,37 @@ public class HistoryActivity extends Activity {
 
     private static MusicArrayAdapter adapter;
     private static ListView listView;
-    private static boolean hasView = false;
+    public static boolean hasView = false;
+    private static ArrayList<Music> musicArrayList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getIntent().getExtras() != null) {
-            final Bundle extras = getIntent().getExtras();
+
+    }
+
+    @Override
+    public void onNewIntent(Intent intent){
+        super.onNewIntent(intent);
+        if (intent.getExtras() != null) {
+            final Bundle extras = intent.getExtras();
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
             if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
+                Log.i(PlayerService.TAG, "Intent");
                 adapter.notifyDataSetChanged();
-                hasView = false;
-                moveTaskToBack(true);
             }
-        } else{
+        } else {
+            Log.i(PlayerService.TAG, "getView");
             getView();
         }
     }
 
+
     public void getView(){
         loadMusicList();
 
-        setContentView(R.layout.activity_history);
-
-        listView = (ListView) findViewById(R.id.history_listview);
-        final ArrayList<Music> musicArrayList = MusicList.getMusicArrayList();
-
-        adapter = new MusicArrayAdapter(this,
-                android.R.layout.simple_list_item_1, musicArrayList);
-        listView.setAdapter(adapter);
+        createAdapter();
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -72,13 +74,38 @@ public class HistoryActivity extends Activity {
         hasView = true;
     }
 
+    public void createAdapter(){
+        setContentView(R.layout.activity_history);
+
+        listView = (ListView) findViewById(R.id.history_listview);
+        musicArrayList = MusicList.getMusicArrayList();
+
+        adapter = new MusicArrayAdapter(this,
+                android.R.layout.simple_list_item_1, musicArrayList);
+        listView.setAdapter(adapter);
+    }
+
     @Override
     public void onResume(){
         super.onResume();
+        Log.i(PlayerService.TAG, "onResume");
         if(!hasView){
             getView();
         }
     }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        hasView = false;
+    }
+
+    @Override
+    public void finish(){
+        super.finish();
+        hasView = false;
+    }
+
 
     public void sendHomeIntent(){
         Intent i = new Intent(Intent.ACTION_MAIN);
