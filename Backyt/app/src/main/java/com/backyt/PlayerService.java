@@ -56,8 +56,10 @@ public class PlayerService extends Service {
     public static final String ACTION_PLAY = "com.backyt.ACTION_PLAY";
     public static final String ACTION_PAUSE = "com.backyt.ACTION_PAUSE";
     public static final String ACTION_EXIT = "com.backyt.ACTION_EXIT";
+    public static final String ACTION_EXITLOADING = "com.backyt.ACTION_EXITLOADING";
     public static final String ACTION_LOOP = "com.backyt.ACTION_LOOP";
     public static final String ACTION_DOWNLOAD = "com.backyt.ACTION_DOWNLOAD";
+
 
     public static final String EXTRA_DATASETCHANGED = "Data Set Changed";
 
@@ -117,6 +119,8 @@ public class PlayerService extends Service {
                 }
             });
             downloadTask.start();
+        } else if (intent.getAction().equals(ACTION_EXITLOADING)) {
+
         } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
             playPause();
         } else if (intent.getAction().equals(ACTION_PLAY)) {
@@ -240,6 +244,15 @@ public class PlayerService extends Service {
     public void createLoadingNotification() {
         mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading_small);
 
+        Intent intent = new Intent(ACTION_EXITLOADING, null, PlayerService.this, PlayerService.class);
+        PendingIntent exitPendingIntent = PendingIntent
+                .getService(PlayerService.this, 0, intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mSmallLoadingNotificationView
+                .setOnClickPendingIntent(R.id.notification_loading_small_imageview_exit,
+                        exitPendingIntent);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 PlayerService.this)
                 .setSmallIcon(R.drawable.ic_loading).setContentTitle(APP_NAME)
@@ -247,6 +260,8 @@ public class PlayerService extends Service {
                 .setContent(mSmallLoadingNotificationView);
 
         mNotification = builder.build();
+
+
 
         startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }

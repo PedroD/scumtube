@@ -19,7 +19,7 @@
         android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/notification_small_textview"
+            android:id="@+id/notification_loading_small_textview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:singleLine="true"
@@ -28,13 +28,23 @@
             android:text="@string/loading"/>
 
         <TextView
-            android:id="@+id/notification_small_textview2"
+            android:id="@+id/notification_loading_small_textview2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textColor="@color/secondary_textcolor_inverted"
             android:textSize="@dimen/text_size_small"
             android:text="@string/loading_advice"/>
-    </LinearLayout>
 
+
+    </LinearLayout>
+    <ImageView
+        android:id="@+id/notification_loading_small_imageview_exit"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@drawable/selectable_background_tomahawk"
+        android:paddingBottom="@dimen/padding_large"
+        android:paddingTop="@dimen/padding_large"
+        android:src="@drawable/ic_player_exit_light"/>
 </LinearLayout>
