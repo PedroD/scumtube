@@ -100,6 +100,10 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "On start command invoked: " + intent);
+        if(mMediaPlayer.isPlaying()) {
+            mMediaPlayer.stop();
+        }
+
         if (intent.getExtras() != null) {
             createLoadingNotification();
             sYtUrl = intent.getExtras().getString("ytUrl");
@@ -574,7 +578,7 @@ public class PlayerService extends Service {
     {
         Bitmap imagex=image;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        //imagex.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] b = baos.toByteArray();
         String imageEncoded = Base64.encodeToString(b,Base64.DEFAULT);
         return imageEncoded;

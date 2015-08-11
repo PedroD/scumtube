@@ -44,7 +44,8 @@
 
         <activity
             android:name=".HistoryActivity"
-            android:label="@string/title_activity_history" >
+            android:label="@string/title_activity_history"
+            android:theme="@android:style/Theme.Black.NoTitleBar">
             <intent-filter
                 android:icon="@drawable/notification_template_icon_bg"
                 android:label="Background Play" >

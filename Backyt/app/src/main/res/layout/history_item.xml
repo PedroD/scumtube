@@ -1,7 +1,7 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
                 android:layout_height="128dip"
-                android:background="@color/primary_background_inverted"
+                android:background="@drawable/history_item_background"
                 android:gravity="center_vertical">
 
     <ImageView
@@ -16,10 +16,10 @@
         android:id="@+id/history_item_title"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_toRightOf="@+id/history_item_cover"
         android:gravity="center_vertical"
         android:textSize="18sp"
         android:textColor="@color/primary_textcolor_inverted"
+        android:paddingLeft="5dip"
         />
 
-</RelativeLayout>
+</LinearLayout>

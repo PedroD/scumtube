@@ -37,6 +37,7 @@ public class MusicList {
         for (int i = 0; i < musicArrayList.size(); i++) {
             if (musicArrayList.get(i).getYtUrl().equals(music.getYtUrl())) {
                 musicArrayList.remove(i);
+                break;
             }
         }
     }

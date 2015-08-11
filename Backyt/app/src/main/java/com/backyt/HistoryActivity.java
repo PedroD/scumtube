@@ -1,12 +1,12 @@
 package com.backyt;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,10 +23,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryActivity extends Activity {
 
     private static MusicArrayAdapter adapter;
     private static ListView listView;
+    private static boolean hasView = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,30 +38,52 @@ public class HistoryActivity extends AppCompatActivity {
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
             if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
                 adapter.notifyDataSetChanged();
-                finish();
+                hasView = false;
+                moveTaskToBack(true);
             }
         } else{
-            loadMusicList();
-
-            setContentView(R.layout.activity_history);
-
-            listView = (ListView) findViewById(R.id.history_listview);
-            final ArrayList<Music> musicArrayList = MusicList.getMusicArrayList();
-
-            adapter = new MusicArrayAdapter(this,
-                    android.R.layout.simple_list_item_1, musicArrayList);
-            listView.setAdapter(adapter);
-
-            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    final Intent playerService = new Intent(HistoryActivity.this, PlayerService.class);
-                    playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
-                    startService(playerService);
-                }
-            });
+            getView();
         }
+    }
+
+    public void getView(){
+        loadMusicList();
+
+        setContentView(R.layout.activity_history);
+
+        listView = (ListView) findViewById(R.id.history_listview);
+        final ArrayList<Music> musicArrayList = MusicList.getMusicArrayList();
+
+        adapter = new MusicArrayAdapter(this,
+                android.R.layout.simple_list_item_1, musicArrayList);
+        listView.setAdapter(adapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final Intent playerService = new Intent(HistoryActivity.this, PlayerService.class);
+                playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
+                startService(playerService);
+                sendHomeIntent();
+            }
+        });
+
+        hasView = true;
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(!hasView){
+            getView();
+        }
+    }
+
+    public void sendHomeIntent(){
+        Intent i = new Intent(Intent.ACTION_MAIN);
+        i.addCategory(Intent.CATEGORY_HOME);
+        startActivity(i);
     }
 
     private class MusicArrayAdapter extends ArrayAdapter<Music> {
