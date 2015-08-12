@@ -117,7 +117,11 @@ public class PlayerService extends Service {
                 public void run() {
                     try {
                         PlayerService.this.start();
-                        new DownloadImageTask().execute(sStreamCoverUrl);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                            new DownloadImageTask().execute(sStreamCoverUrl);
+                        } else {
+                            updateMusicList();
+                        }
                     } catch (Exception e) {
                         if (e.getMessage() != null)
                             Log.i(TAG, e.getMessage());
@@ -388,7 +392,7 @@ public class PlayerService extends Service {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
-                    .setSmallIcon(R.drawable.ic_notification).setContentTitle(APP_NAME)
+                    .setSmallIcon(R.drawable.tray).setContentTitle(APP_NAME)
                     .setContentText(sStreamTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
 

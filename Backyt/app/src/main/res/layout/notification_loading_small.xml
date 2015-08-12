@@ -24,7 +24,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textColor="@color/primary_textcolor_inverted"
-            android:textSize="@dimen/text_size_large"
+            android:textSize="@dimen/text_size_small"
             android:text="@string/loading"/>
 
         <TextView
@@ -33,7 +33,7 @@
             android:layout_height="wrap_content"
             android:singleLine="true"
             android:textColor="@color/secondary_textcolor_inverted"
-            android:textSize="@dimen/text_size_small"
+            android:textSize="@dimen/text_size_micro"
             android:text="@string/loading_advice"/>
 
 

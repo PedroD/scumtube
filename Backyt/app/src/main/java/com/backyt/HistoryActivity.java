@@ -78,6 +78,7 @@ public class HistoryActivity extends Activity {
         setContentView(R.layout.activity_history);
 
         listView = (ListView) findViewById(R.id.history_listview);
+        listView.setEmptyView((View) findViewById(R.id.history_empty));
         musicArrayList = MusicList.getMusicArrayList();
 
         adapter = new MusicArrayAdapter(this,

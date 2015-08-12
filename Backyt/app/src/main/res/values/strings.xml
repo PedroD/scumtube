@@ -6,4 +6,8 @@
     <string name="loading_advice">Please don\'t turn off your internet connection.</string>
     <string name="title_activity_history">HistoryActivity</string>
     <string name="app_name">BackYT</string>
+    <string name="history_activity">Music History</string>
+    <string name="history_empty">The history is empty.</string>
+    <string name="intent">Background Play</string>
+
 </resources>
