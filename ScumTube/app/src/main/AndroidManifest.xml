@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    package="com.scumtube"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/backyt"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name="com.scumtube.PlayerActivity"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:label="@string/app_name"
+            android:noHistory="true"
+            android:stateNotNeeded="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter
+                android:icon="@drawable/backyt"
+                android:label="@string/intent">
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data
+                    android:host="www.youtube.com"
+                    android:mimeType="text/*"/>
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name="com.scumtube.PlayerService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.backyt.ACTION_PLAYPAUSE"/>
+                <action android:name="com.backyt.ACTION_PLAY"/>
+                <action android:name="com.backyt.ACTION_PAUSE"/>
+                <action android:name="com.backyt.ACTION_LOOP"/>
+                <action android:name="com.backyt.ACTION_EXIT"/>
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name="com.scumtube.HistoryActivity"
+            android:label="@string/history_activity"
+            android:theme="@android:style/Theme.Holo">
+            <intent-filter
+                android:icon="@drawable/backyt"
+                android:label="@string/app_name">
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
