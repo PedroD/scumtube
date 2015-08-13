@@ -72,6 +72,8 @@ public class PlayerService extends AbstractService {
     private final PhoneCallListener mPhoneCallListener = new PhoneCallListener();
     private final AudioManagerListener mAudioFocusListener = new AudioManagerListener();
 
+    private Thread downloadTask = null;
+
     public PlayerService() {
     }
 
@@ -104,7 +106,7 @@ public class PlayerService extends AbstractService {
             createLoadingNotification();
             sYtUrl = intent.getExtras().getString("ytUrl");
             sYtVideoId = parseVideoId(sYtUrl);
-            final Thread downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
+            downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
                 @Override
                 public void run() {
                     try {
@@ -225,7 +227,7 @@ public class PlayerService extends AbstractService {
         final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         getApplicationContext().sendBroadcast(it);
         showToast("The download will start shortly.");
-        final Thread downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
+        downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
             @Override
             public void run() {
                 final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
