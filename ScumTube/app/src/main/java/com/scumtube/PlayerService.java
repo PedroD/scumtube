@@ -79,7 +79,7 @@ public class PlayerService extends AbstractService {
 
     @Override
     public void onCreate() {
-        Log.i(ScumTube.TAG, "On create invoked.");
+        Log.i(ScumTubeApplication.TAG, "On create invoked.");
         super.onCreate();
 
         // Initialize PhoneCallListener
@@ -97,7 +97,7 @@ public class PlayerService extends AbstractService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(ScumTube.TAG, "On start command invoked: " + intent);
+        Log.i(ScumTubeApplication.TAG, "On start command invoked: " + intent);
 
         if (intent.getExtras() != null) {
             if (mMediaPlayer.isPlaying()) {
@@ -118,7 +118,7 @@ public class PlayerService extends AbstractService {
                         }
                     } catch (Exception e) {
                         if (e.getMessage() != null)
-                            Log.i(ScumTube.TAG, e.getMessage());
+                            Log.i(ScumTubeApplication.TAG, e.getMessage());
                     }
                 }
             });
@@ -261,7 +261,7 @@ public class PlayerService extends AbstractService {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 PlayerService.this)
-                .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTube.APP_NAME)
+                .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
                 .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContent(mSmallLoadingNotificationView);
 
@@ -381,13 +381,13 @@ public class PlayerService extends AbstractService {
                             downloadPendingIntent);
 
             mSmallNotificationView
-                    .setTextViewText(R.id.notification_small_textview, ScumTube.APP_NAME);
+                    .setTextViewText(R.id.notification_small_textview, ScumTubeApplication.APP_NAME);
             mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
                     sStreamTitle);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
-                    .setSmallIcon(R.drawable.tray).setContentTitle(ScumTube.APP_NAME)
+                    .setSmallIcon(R.drawable.tray).setContentTitle(ScumTubeApplication.APP_NAME)
                     .setContentText(sStreamTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
 
@@ -410,7 +410,7 @@ public class PlayerService extends AbstractService {
                                 downloadPendingIntent);
 
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
-                        ScumTube.APP_NAME);
+                        ScumTubeApplication.APP_NAME);
                 mLargeNotificationView
                         .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
             }
@@ -432,34 +432,34 @@ public class PlayerService extends AbstractService {
         public void onAudioFocusChange(int focusChange) {
             switch (focusChange) {
                 case AudioManager.AUDIOFOCUS_GAIN:
-                    Log.i(ScumTube.TAG, "AUDIOFOCUS_GAIN");
+                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                    Log.i(ScumTube.TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                    Log.i(ScumTube.TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
-                    Log.e(ScumTube.TAG, "AUDIOFOCUS_LOSS");
+                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    Log.e(ScumTube.TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    Log.e(ScumTube.TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
                     // Lower the volume
                     pause();
                     break;
@@ -482,7 +482,7 @@ public class PlayerService extends AbstractService {
             String requestUrl = "http://176.111.109.11:9194/video_id/" + videoId;
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
-            Log.i(ScumTube.TAG, "Requesting music " + requestUrl);
+            Log.i(ScumTubeApplication.TAG, "Requesting music " + requestUrl);
             try {
                 JSONObject jsonObject;
                 while (true) {
@@ -507,20 +507,20 @@ public class PlayerService extends AbstractService {
                             sStreamMp3Url = jsonObject.getString("url");
                             sStreamCoverUrl = jsonObject.getString("cover");
                             sStreamTitle = jsonObject.getString("title");
-                            Log.i(ScumTube.TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
+                            Log.i(ScumTubeApplication.TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
                             onSuccess.run();
                             return;
                         } else if (jsonObject.has("error")) {
                             final String errorMsg = jsonObject.getString("error");
                             throw new Exception(errorMsg);
                         }
-                        Log.i(ScumTube.TAG, jsonObject.getString("scheduled"));
+                        Log.i(ScumTubeApplication.TAG, jsonObject.getString("scheduled"));
                         Thread.sleep(2000);
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e(ScumTube.TAG, e.getMessage());
+                Log.e(ScumTubeApplication.TAG, e.getMessage());
                 showToast(e.getMessage());
                 try {
                     Thread.sleep(5000);
@@ -550,7 +550,7 @@ public class PlayerService extends AbstractService {
                 updateMusicList();
             } catch (Exception e) {
                 if (e.getMessage() != null)
-                    Log.i(ScumTube.TAG, e.getMessage());
+                    Log.i(ScumTubeApplication.TAG, e.getMessage());
             }
             return null;
         }

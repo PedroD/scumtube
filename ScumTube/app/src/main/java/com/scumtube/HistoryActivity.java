@@ -44,11 +44,11 @@ public class HistoryActivity extends AbstractActivity {
             final Bundle extras = intent.getExtras();
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
             if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
-                Log.i(ScumTube.TAG, "Intent");
+                Log.i(ScumTubeApplication.TAG, "Intent");
                 adapter.notifyDataSetChanged();
             }
         } else {
-            Log.i(ScumTube.TAG, "getView");
+            Log.i(ScumTubeApplication.TAG, "getView");
             getView();
         }
     }
@@ -88,7 +88,7 @@ public class HistoryActivity extends AbstractActivity {
     @Override
     public void onResume(){
         super.onResume();
-        Log.i(ScumTube.TAG, "onResume");
+        Log.i(ScumTubeApplication.TAG, "onResume");
         if(!hasView){
             getView();
         }
