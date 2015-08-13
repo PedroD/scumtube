@@ -42,10 +42,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 
-public class PlayerService extends Service {
-
-    public static final String APP_NAME = "ScumTube";
-    public static final String TAG = "ScumTubeLog";
+public class PlayerService extends AbstractService {
 
     public static final String PREFS_NAME = "scumtube_preferences";
     public static final String PREFS_ISLOOPING = "isLooping";
@@ -85,7 +82,7 @@ public class PlayerService extends Service {
 
     @Override
     public void onCreate() {
-        Log.i(TAG, "On create invoked.");
+        Log.i(Core.TAG, "On create invoked.");
         super.onCreate();
 
         // Initialize PhoneCallListener
@@ -96,18 +93,14 @@ public class PlayerService extends Service {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                try {
                     drawPlayPause();
-                } catch(Exception e) {
-                    Log.e(TAG,e.getClass().getName(),e);
-                }
             }
         });
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(TAG, "On start command invoked: " + intent);
+        Log.i(Core.TAG, "On start command invoked: " + intent);
 
         if (intent.getExtras() != null) {
             if (mMediaPlayer.isPlaying()) {
@@ -128,7 +121,7 @@ public class PlayerService extends Service {
                         }
                     } catch (Exception e) {
                         if (e.getMessage() != null)
-                            Log.i(TAG, e.getMessage());
+                            Log.i(Core.TAG, e.getMessage());
                     }
                 }
             });
@@ -271,7 +264,7 @@ public class PlayerService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(
                 PlayerService.this)
-                .setSmallIcon(R.drawable.ic_loading).setContentTitle(APP_NAME)
+                .setSmallIcon(R.drawable.ic_loading).setContentTitle(Core.APP_NAME)
                 .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContent(mSmallLoadingNotificationView);
 
@@ -391,13 +384,13 @@ public class PlayerService extends Service {
                             downloadPendingIntent);
 
             mSmallNotificationView
-                    .setTextViewText(R.id.notification_small_textview, APP_NAME);
+                    .setTextViewText(R.id.notification_small_textview, Core.APP_NAME);
             mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
                     sStreamTitle);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     PlayerService.this)
-                    .setSmallIcon(R.drawable.tray).setContentTitle(APP_NAME)
+                    .setSmallIcon(R.drawable.tray).setContentTitle(Core.APP_NAME)
                     .setContentText(sStreamTitle).setOngoing(true).setPriority(
                             NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
 
@@ -420,7 +413,7 @@ public class PlayerService extends Service {
                                 downloadPendingIntent);
 
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
-                        APP_NAME);
+                        Core.APP_NAME);
                 mLargeNotificationView
                         .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
             }
@@ -442,34 +435,34 @@ public class PlayerService extends Service {
         public void onAudioFocusChange(int focusChange) {
             switch (focusChange) {
                 case AudioManager.AUDIOFOCUS_GAIN:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN");
+                    Log.i(Core.TAG, "AUDIOFOCUS_GAIN");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                    Log.i(Core.TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                    Log.i(TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                    Log.i(Core.TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS");
+                    Log.e(Core.TAG, "AUDIOFOCUS_LOSS");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                    Log.e(Core.TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    Log.e(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                    Log.e(Core.TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
                     // Lower the volume
                     pause();
                     break;
@@ -492,7 +485,7 @@ public class PlayerService extends Service {
             String requestUrl = "http://176.111.109.11:9194/video_id/" + videoId;
             HttpClient httpClient = new DefaultHttpClient();
             HttpGet httpGet = new HttpGet(requestUrl);
-            Log.i(TAG, "Requesting music " + requestUrl);
+            Log.i(Core.TAG, "Requesting music " + requestUrl);
             try {
                 JSONObject jsonObject;
                 while (true) {
@@ -517,20 +510,20 @@ public class PlayerService extends Service {
                             sStreamMp3Url = jsonObject.getString("url");
                             sStreamCoverUrl = jsonObject.getString("cover");
                             sStreamTitle = jsonObject.getString("title");
-                            Log.i(TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
+                            Log.i(Core.TAG, sStreamTitle + " :: " + sStreamMp3Url + " :: " + sStreamCoverUrl);
                             onSuccess.run();
                             return;
                         } else if (jsonObject.has("error")) {
                             final String errorMsg = jsonObject.getString("error");
                             throw new Exception(errorMsg);
                         }
-                        Log.i(TAG, jsonObject.getString("scheduled"));
+                        Log.i(Core.TAG, jsonObject.getString("scheduled"));
                         Thread.sleep(2000);
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e(TAG, e.getMessage());
+                Log.e(Core.TAG, e.getMessage());
                 showToast(e.getMessage());
                 try {
                     Thread.sleep(5000);
@@ -539,16 +532,6 @@ public class PlayerService extends Service {
                 exit();
             }
         }
-    }
-
-    private void showToast(final String message) {
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(PlayerService.this.getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
     }
 
     private final class DownloadImageTask extends AsyncTask<String, Void, Void> {
@@ -570,7 +553,7 @@ public class PlayerService extends Service {
                 updateMusicList();
             } catch (Exception e) {
                 if (e.getMessage() != null)
-                    Log.i(TAG, e.getMessage());
+                    Log.i(Core.TAG, e.getMessage());
             }
             return null;
         }

@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 
-public class PlayerActivity extends Activity {
+public class PlayerActivity extends AbstractActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

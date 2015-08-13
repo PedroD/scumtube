@@ -1,6 +1,5 @@
 package com.scumtube;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,7 +23,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class HistoryActivity extends Activity {
+public class HistoryActivity extends AbstractActivity {
 
     private static MusicArrayAdapter adapter;
     private static ListView listView;
@@ -45,11 +44,11 @@ public class HistoryActivity extends Activity {
             final Bundle extras = intent.getExtras();
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
             if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
-                Log.i(PlayerService.TAG, "Intent");
+                Log.i(Core.TAG, "Intent");
                 adapter.notifyDataSetChanged();
             }
         } else {
-            Log.i(PlayerService.TAG, "getView");
+            Log.i(Core.TAG, "getView");
             getView();
         }
     }
@@ -89,7 +88,7 @@ public class HistoryActivity extends Activity {
     @Override
     public void onResume(){
         super.onResume();
-        Log.i(PlayerService.TAG, "onResume");
+        Log.i(Core.TAG, "onResume");
         if(!hasView){
             getView();
         }
