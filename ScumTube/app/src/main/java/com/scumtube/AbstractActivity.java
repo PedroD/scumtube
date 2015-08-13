@@ -8,16 +8,6 @@ import android.widget.Toast;
 
 public class AbstractActivity extends Activity {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final Activity a = this;
-        /**
-         * Handle all uncaught exceptions.
-         */
-        Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionReporter());
-    }
-
     protected void showToast( final String message) {
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
