@@ -19,7 +19,6 @@ import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
@@ -163,7 +162,7 @@ public class PlayerService extends AbstractService {
         }
         mMediaPlayer.start();
 
-        loadIsLooping();
+        loadLoopPreferencesFromStorage();
 
         synchronized (this) {
             mShowingNotification = true;
@@ -592,7 +591,7 @@ public class PlayerService extends AbstractService {
         editor.commit();
     }
 
-    public void loadIsLooping() {
+    public void loadLoopPreferencesFromStorage() {
         SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
         mMediaPlayer.setLooping(preferences.getBoolean(PREFS_ISLOOPING, false));
     }
