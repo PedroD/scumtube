@@ -38,6 +38,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
+import static com.scumtube.ScumTubeApplication.mSmallLoadingNotificationView;
+import static com.scumtube.ScumTubeApplication.mSmallNotificationView;
 
 public class PlayerService extends AbstractService {
 
@@ -58,20 +61,16 @@ public class PlayerService extends AbstractService {
     public static final String EXTRA_DATASETCHANGED = "Data Set Changed";
 
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
-    private static boolean sIsVolumeHalved = false;
     private static String sStreamMp3Url;
     private static String sStreamCoverUrl;
     private static String sStreamTitle;
     private static Bitmap sCover;
     private static String sYtVideoId;
     private static String sYtUrl;
-    private RemoteViews mSmallNotificationView;
     private boolean mShowingNotification;
     private Notification mNotification;
-    private RemoteViews mLargeNotificationView;
-    private RemoteViews mSmallLoadingNotificationView;
-    private MediaPlayer mMediaPlayer = new MediaPlayer();
-    private PhoneCallListener mPhoneCallListener = new PhoneCallListener();
+    private final MediaPlayer mMediaPlayer = new MediaPlayer();
+    private final PhoneCallListener mPhoneCallListener = new PhoneCallListener();
     private final AudioManagerListener mAudioFocusListener = new AudioManagerListener();
 
     public PlayerService() {
@@ -90,7 +89,7 @@ public class PlayerService extends AbstractService {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                    drawPlayPause();
+                drawPlayPause();
             }
         });
     }
@@ -166,7 +165,9 @@ public class PlayerService extends AbstractService {
 
         loadIsLooping();
 
-        mShowingNotification = true;
+        synchronized (this) {
+            mShowingNotification = true;
+        }
         createNotification();
 
         /*
@@ -233,42 +234,28 @@ public class PlayerService extends AbstractService {
         downloadTask.start();
     }
 
-    public void halveVolume() {
-        if (!sIsVolumeHalved) {
-            mMediaPlayer.setVolume(0.1f, 0.1f);
-            sIsVolumeHalved = true;
-        }
-    }
-
-    public void returnVolumeToNormal() {
-        if (sIsVolumeHalved) {
-            mMediaPlayer.setVolume(1f, 1f);
-            sIsVolumeHalved = false;
-        }
-    }
-
     public void createLoadingNotification() {
-        mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading_small);
+        synchronized (this) {
+            Intent intent = new Intent(ACTION_EXITLOADING, null, PlayerService.this, PlayerService.class);
+            PendingIntent exitPendingIntent = PendingIntent
+                    .getService(PlayerService.this, 0, intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
 
-        Intent intent = new Intent(ACTION_EXITLOADING, null, PlayerService.this, PlayerService.class);
-        PendingIntent exitPendingIntent = PendingIntent
-                .getService(PlayerService.this, 0, intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+            mSmallLoadingNotificationView
+                    .setOnClickPendingIntent(R.id.notification_loading_small_imageview_exit,
+                            exitPendingIntent);
 
-        mSmallLoadingNotificationView
-                .setOnClickPendingIntent(R.id.notification_loading_small_imageview_exit,
-                        exitPendingIntent);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    PlayerService.this)
+                    .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
+                    .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setContent(mSmallLoadingNotificationView);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(
-                PlayerService.this)
-                .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
-                .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
-                .setContent(mSmallLoadingNotificationView);
-
-        mNotification = builder.build();
+            mNotification = builder.build();
 
 
-        startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+            startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+        }
     }
 
     public void drawCover() {
@@ -330,93 +317,89 @@ public class PlayerService extends AbstractService {
     }
 
     public void updateNotification() {
-        mNotification.contentView = mSmallNotificationView;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mNotification.bigContentView = mLargeNotificationView;
+        synchronized (this) {
+            mNotification.contentView = mSmallNotificationView;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mNotification.bigContentView = mLargeNotificationView;
+            }
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
         }
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
     }
 
     public void createNotification() {
-        if (mShowingNotification) {
-            Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
-                    PlayerService.class);
-            PendingIntent playPausePendingIntent = PendingIntent
-                    .getService(PlayerService.this, 0, intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-            intent = new Intent(ACTION_LOOP, null, PlayerService.this,
-                    PlayerService.class);
-            PendingIntent loopPendingIntent = PendingIntent
-                    .getService(PlayerService.this, 0, intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-            intent = new Intent(ACTION_EXIT, null, PlayerService.this, PlayerService.class);
-            PendingIntent exitPendingIntent = PendingIntent
-                    .getService(PlayerService.this, 0, intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
-            intent = new Intent(ACTION_DOWNLOAD, null, PlayerService.this, PlayerService.class);
-            PendingIntent downloadPendingIntent = PendingIntent
-                    .getService(PlayerService.this, 0, intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT);
+        synchronized (this) {
+            if (mShowingNotification) {
+                Intent intent = new Intent(ACTION_PLAYPAUSE, null, PlayerService.this,
+                        PlayerService.class);
+                PendingIntent playPausePendingIntent = PendingIntent
+                        .getService(PlayerService.this, 0, intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
+                intent = new Intent(ACTION_LOOP, null, PlayerService.this,
+                        PlayerService.class);
+                PendingIntent loopPendingIntent = PendingIntent
+                        .getService(PlayerService.this, 0, intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
+                intent = new Intent(ACTION_EXIT, null, PlayerService.this, PlayerService.class);
+                PendingIntent exitPendingIntent = PendingIntent
+                        .getService(PlayerService.this, 0, intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
+                intent = new Intent(ACTION_DOWNLOAD, null, PlayerService.this, PlayerService.class);
+                PendingIntent downloadPendingIntent = PendingIntent
+                        .getService(PlayerService.this, 0, intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                mSmallNotificationView = new RemoteViews(getPackageName(),
-                        R.layout.notification_small);
-            } else {
-                mSmallNotificationView = new RemoteViews(getPackageName(),
-                        R.layout.notification_small_compat);
-            }
-
-            mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
-                            playPausePendingIntent);
-            mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_loop,
-                            loopPendingIntent);
-            mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_exit,
-                            exitPendingIntent);
-            mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_download,
-                            downloadPendingIntent);
-
-            mSmallNotificationView
-                    .setTextViewText(R.id.notification_small_textview, ScumTubeApplication.APP_NAME);
-            mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
-                    sStreamTitle);
-
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(
-                    PlayerService.this)
-                    .setSmallIcon(R.drawable.tray).setContentTitle(ScumTubeApplication.APP_NAME)
-                    .setContentText(sStreamTitle).setOngoing(true).setPriority(
-                            NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
-
-            mNotification = builder.build();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                mLargeNotificationView = new RemoteViews(getPackageName(),
-                        R.layout.notification_large);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
+                mSmallNotificationView
+                        .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                                 playPausePendingIntent);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_loop,
+                mSmallNotificationView
+                        .setOnClickPendingIntent(R.id.notification_small_imageview_loop,
                                 loopPendingIntent);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_exit,
+                mSmallNotificationView
+                        .setOnClickPendingIntent(R.id.notification_small_imageview_exit,
                                 exitPendingIntent);
-                mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_download,
+                mSmallNotificationView
+                        .setOnClickPendingIntent(R.id.notification_small_imageview_download,
                                 downloadPendingIntent);
 
-                mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
-                        ScumTubeApplication.APP_NAME);
-                mLargeNotificationView
-                        .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
+                mSmallNotificationView
+                        .setTextViewText(R.id.notification_small_textview, ScumTubeApplication.APP_NAME);
+                mSmallNotificationView.setTextViewText(R.id.notification_small_textview2,
+                        sStreamTitle);
+
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                        PlayerService.this)
+                        .setSmallIcon(R.drawable.tray).setContentTitle(ScumTubeApplication.APP_NAME)
+                        .setContentText(sStreamTitle).setOngoing(true).setPriority(
+                                NotificationCompat.PRIORITY_MAX).setContent(mSmallNotificationView);
+
+                mNotification = builder.build();
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    mLargeNotificationView = new RemoteViews(getPackageName(),
+                            R.layout.notification_large);
+                    mLargeNotificationView
+                            .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
+                                    playPausePendingIntent);
+                    mLargeNotificationView
+                            .setOnClickPendingIntent(R.id.notification_large_imageview_loop,
+                                    loopPendingIntent);
+                    mLargeNotificationView
+                            .setOnClickPendingIntent(R.id.notification_large_imageview_exit,
+                                    exitPendingIntent);
+                    mLargeNotificationView
+                            .setOnClickPendingIntent(R.id.notification_large_imageview_download,
+                                    downloadPendingIntent);
+
+                    mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
+                            ScumTubeApplication.APP_NAME);
+                    mLargeNotificationView
+                            .setTextViewText(R.id.notification_large_textview2, sStreamTitle);
+                }
+                drawPlayPause();
+                drawLoop();
+                updateNotification();
             }
-            drawPlayPause();
-            drawLoop();
-            updateNotification();
         }
     }
 
