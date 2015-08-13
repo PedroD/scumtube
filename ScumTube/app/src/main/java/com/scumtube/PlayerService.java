@@ -376,8 +376,6 @@ public class PlayerService extends AbstractService {
                 mNotification = builder.build();
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    mLargeNotificationView = new RemoteViews(getPackageName(),
-                            R.layout.notification_large);
                     mLargeNotificationView
                             .setOnClickPendingIntent(R.id.notification_large_imageview_playpause,
                                     playPausePendingIntent);

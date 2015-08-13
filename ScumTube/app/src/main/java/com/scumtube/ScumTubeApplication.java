@@ -20,6 +20,12 @@ public class ScumTubeApplication extends Application {
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionReporter(androidDefaultUEH));
 
         mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading_small);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mLargeNotificationView = new RemoteViews(getPackageName(),
+                    R.layout.notification_large);
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mSmallNotificationView = new RemoteViews(getPackageName(),
                     R.layout.notification_small);
