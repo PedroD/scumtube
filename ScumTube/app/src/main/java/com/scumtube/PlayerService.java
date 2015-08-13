@@ -123,7 +123,7 @@ public class PlayerService extends AbstractService {
             });
             downloadTask.start();
         } else if (intent.getAction().equals(ACTION_EXITLOADING)) {
-            android.os.Process.killProcess(android.os.Process.myPid());
+            exit();
             return START_NOT_STICKY;
         } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
             playPause();
@@ -189,12 +189,15 @@ public class PlayerService extends AbstractService {
     }
 
     public void pause() {
-        mMediaPlayer.pause();
-        drawPlayPause();
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+            drawPlayPause();
+        }
     }
 
     public void exit() {
-        mMediaPlayer.stop();
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying())
+            mMediaPlayer.stop();
         stopSelf();
     }
 
@@ -448,7 +451,7 @@ public class PlayerService extends AbstractService {
         }
     }
 
-    class RequestMp3Task extends Thread {
+    final class RequestMp3Task extends Thread {
 
         private final String videoId;
         private final Runnable onSuccess;
@@ -501,13 +504,13 @@ public class PlayerService extends AbstractService {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.e(ScumTubeApplication.TAG, e.getMessage());
-                showToast(e.getMessage());
+                Log.e(ScumTubeApplication.TAG, e.getClass().getName(), e);
+                showToast("There was a problem contacting YouTube. Please check your Internet connection.");
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e1) {
                 }
-                exit();
+                PlayerService.this.exit();
             }
         }
     }
