@@ -96,7 +96,11 @@ public class PlayerService extends Service {
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                drawPlayPause();
+                try {
+                    drawPlayPause();
+                } catch(Exception e) {
+                    Log.e(TAG,e.getClass().getName(),e);
+                }
             }
         });
     }
