@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
 import static com.scumtube.ScumTubeApplication.mSmallLoadingNotificationView;
@@ -59,19 +60,18 @@ public class PlayerService extends AbstractService {
     public static final String EXTRA_DATASETCHANGED = "Data Set Changed";
 
     private static final int PLAYERSERVICE_NOTIFICATION_ID = 1;
-    private static String sStreamMp3Url;
-    private static String sStreamCoverUrl;
-    private static String sStreamTitle;
-    private static Bitmap sCover;
-    private static String sYtVideoId;
-    private static String sYtUrl;
-    private static Object isServiceClosedBooleanLock = new Object();
-    private static final MediaPlayer mMediaPlayer = new MediaPlayer();
+    private String sStreamMp3Url;
+    private String sStreamCoverUrl;
+    private String sStreamTitle;
+    private Bitmap sCover;
+    private String sYtVideoId;
+    private String sYtUrl;
+    private final MediaPlayer mMediaPlayer = new MediaPlayer();
     private final PhoneCallListener mPhoneCallListener = new PhoneCallListener();
     private final AudioManagerListener mAudioFocusListener = new AudioManagerListener();
-    private static Notification mNotification;
+    private Notification mNotification;
     private Thread downloadTask = null;
-    private volatile boolean isServiceClosed = true;
+    private Object canExitLock = new ReentrantLock();
 
     public PlayerService() {
     }
@@ -107,57 +107,56 @@ public class PlayerService extends AbstractService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(ScumTubeApplication.TAG, "On start command invoked: " + intent);
 
-        synchronized (isServiceClosedBooleanLock) {
-            isServiceClosed = false;
-        }
-
-        if (downloadTask != null) {
-            Log.i(ScumTubeApplication.TAG, "Killing previous download task.");
-            downloadTask.interrupt();
-            downloadTask = null;
-        }
-
-        if (intent.getExtras() != null) {
-            if (mMediaPlayer.isPlaying()) {
-                mMediaPlayer.stop();
-            }
-            createLoadingNotification();
-            sYtUrl = intent.getExtras().getString("ytUrl");
-            sYtVideoId = parseVideoId(sYtUrl);
-            downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        PlayerService.this.start();
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                            new DownloadImageTask().execute(sStreamCoverUrl);
-                        } else {
-                            updateMusicList();
-                        }
-                    } catch (Exception e) {
-                        Log.i(ScumTubeApplication.TAG, e.getClass().getName(), e);
-                        PlayerService.this.exit();
-                    }
+        synchronized (canExitLock) {
+            if (intent.getExtras() != null) {
+                if (downloadTask != null) {
+                    Log.i(ScumTubeApplication.TAG, "Killing previous download task.");
+                    downloadTask.interrupt();
+                    downloadTask = null;
                 }
-            });
-            downloadTask.start();
-        } else if (intent.getAction().equals(ACTION_EXITLOADING)) {
-            exit();
-            return START_NOT_STICKY;
-        } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
-            playPause();
-        } else if (intent.getAction().equals(ACTION_PLAY)) {
-            start();
-        } else if (intent.getAction().equals(ACTION_LOOP)) {
-            loop();
-        } else if (intent.getAction().equals(ACTION_EXIT)) {
-            exit();
-            return START_NOT_STICKY;
-        } else if (intent.getAction().equals(ACTION_DOWNLOAD)) {
-            download();
-        } else {
-            Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
-            return START_NOT_STICKY;
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.stop();
+                }
+                mMediaPlayer.reset();
+                createLoadingNotification();
+                sYtUrl = intent.getExtras().getString("ytUrl");
+                sYtVideoId = parseVideoId(sYtUrl);
+                downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
+                    @Override
+                    public void run() {
+                        synchronized (canExitLock) {
+                            try {
+                                Log.i(ScumTubeApplication.TAG, "Drawing notification player...");
+                                PlayerService.this.start();
+                                Log.i(ScumTubeApplication.TAG, "Finished drawing notification player.");
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                                    new DownloadImageTask().execute(sStreamCoverUrl);
+                                } else {
+                                    updateMusicList();
+                                }
+                            } catch (Exception e) {
+                                Log.i(ScumTubeApplication.TAG, e.getClass().getName(), e);
+                                System.exit(2);
+                            }
+                        }
+                    }
+                });
+                downloadTask.start();
+            } else if (intent.getAction().equals(ACTION_EXITLOADING)) {
+                exit();
+            } else if (intent.getAction().equals(ACTION_PLAYPAUSE)) {
+                playPause();
+            } else if (intent.getAction().equals(ACTION_PLAY)) {
+                start();
+            } else if (intent.getAction().equals(ACTION_LOOP)) {
+                loop();
+            } else if (intent.getAction().equals(ACTION_EXIT)) {
+                exit();
+            } else if (intent.getAction().equals(ACTION_DOWNLOAD)) {
+                download();
+            } else {
+                Toast.makeText(getApplicationContext(), "An error occurred while accessing the video!", Toast.LENGTH_LONG).show();
+            }
         }
         return START_NOT_STICKY;
     }
@@ -212,17 +211,19 @@ public class PlayerService extends AbstractService {
     }
 
     public void exit() {
-        Log.i(ScumTubeApplication.TAG, "Exiting service.");
-        synchronized (isServiceClosedBooleanLock) {
-            isServiceClosed = true;
+        synchronized (canExitLock) {
+            Log.i(ScumTubeApplication.TAG, "Stopping player.");
+            if (downloadTask != null) {
+                downloadTask.interrupt();
+                downloadTask = null;
+            }
+            if (mMediaPlayer != null && mMediaPlayer.isPlaying())
+                mMediaPlayer.stop();
+            mMediaPlayer.reset();
+            final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            nm.cancel(PLAYERSERVICE_NOTIFICATION_ID);
+            //stopSelf();
         }
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying())
-            mMediaPlayer.stop();
-        if (downloadTask != null) {
-            downloadTask.interrupt();
-            downloadTask = null;
-        }
-        stopSelf();
     }
 
     public void loop() {
@@ -280,8 +281,9 @@ public class PlayerService extends AbstractService {
 
             mNotification = builder.build();
 
-
-            startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+            final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
+            //startForeground(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
         }
     }
 
@@ -343,13 +345,19 @@ public class PlayerService extends AbstractService {
         updateNotification();
     }
 
+    @Override
+    public void onDestroy() {
+        Log.w(ScumTubeApplication.TAG, "Player Service being destroyed.");
+        this.exit();
+    }
+
     public void updateNotification() {
         synchronized (this) {
             mNotification.contentView = mSmallNotificationView;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 mNotification.bigContentView = mLargeNotificationView;
             }
-            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, mNotification);
         }
     }
@@ -600,6 +608,7 @@ public class PlayerService extends AbstractService {
 
         @Override
         protected Void doInBackground(String... urls) {
+            Log.i(ScumTubeApplication.TAG, "Loading cover image...");
             try {
                 String coverUrl = urls[0];
                 Bitmap cover = null;
@@ -617,6 +626,7 @@ public class PlayerService extends AbstractService {
                 if (e.getMessage() != null)
                     Log.i(ScumTubeApplication.TAG, e.getMessage());
             }
+            Log.i(ScumTubeApplication.TAG, "Finished loading cover image.");
             return null;
         }
     }

@@ -63,7 +63,7 @@ public class HistoryActivity extends AbstractActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final Intent playerService = new Intent(HistoryActivity.this, PlayerService.class);
+                final Intent playerService = new Intent(getApplicationContext(), PlayerService.class);
                 playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
                 startService(playerService);
                 sendHomeIntent();
