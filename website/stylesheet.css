@@ -18,24 +18,36 @@
                 background: url(1.png) no-repeat scroll 0 0 / contain;
             }
 
-            .logo {     
+            .logo {
+                display: inline-block;
+                position: relative;
+                top: 50%;
+                margin-top: -50px;     
                 width: 300px;
                 height: 100px;
                 background: transparent url(logo.png) no-repeat scroll 0 0 / contain;
             }
 
-            .horizontal-position {
-                display: inline-block;
-                position: relative;                
+            .horizontal-position {            
                 left: 25%;
                 margin-left: -150px;
             }
 
             .about {
-                top: 64pt;
-                width: 50%;
+                display: inline-block;
+                position: relative;
+                top: 50pt;
+                width: 40%;
                 height: 200pt;
-                background: black;
+            }
+
+            .download{
+                display: inline-block;
+                position: relative;
+                top: 160pt;
+                width: 250px; 
+                height: 87pt; 
+                background: transparent url(download.png) no-repeat scroll 0 0 / contain;
             }
         }
 
@@ -45,49 +57,70 @@
     }
 
     .logo {
+        display: inline-block;
+        position: relative;
+        top: 50%;
+        margin-top: -50px;
         width: 300px;
         height: 100px;
         background: transparent url(logo.png) no-repeat scroll 0 0 / contain;
     }
 
     .horizontal-position {
-        display: inline-block;
-        position: relative;
         left: 50%;
         margin-left: -150px;
     }
 
     .about {
-        top: 64pt;
+        display: inline-block;
+        position: relative;
+        top: 50pt;
         left: 0;
         margin-left: 0;
         width: 100%;
         height: 200pt;
-        background: black;
+    }
+
+    .download{
+        display: inline-block;
+        position: relative;
+        top: 64pt;
+        left: 50%;
+        margin-left: -125px;
+        width: 250px; 
+        height: 87pt; 
+        background: transparent url(download.png) no-repeat scroll 0 0 / contain;
     }
 }
 
-.body {
+body {
     padding: 0; 
     margin: 0; 
+    height: 1px;
     min-height: 100vh; 
-    min-width: 100vw;
+    max-width: 100vw;
 }
 
 .header {
-    float:left; 
-    width: 100vw; 
-    height: 100pt; 
-    background: darkblue;
+    display: block;
+    width: 100%; 
+    height: 100pt;
+    background: #800818; 
+    border-bottom: 5px solid #5F0413;
 }
 
 .content {
-    width: 100vw; 
-    min-height: 100vh; 
-    background: deeppink;
+    font-family: arial;
+    text-align: justify;
+    display: inline-block;
+    width: 100%; 
+    min-height: 600pt;
+    background: #E9EDED;
 }
 
-.logo-top-position{
-    top: 50%;
-    margin-top: -50px;
+.footer {
+    display: inline-block;
+    width: 100%;
+    min-height: 200pt;
+    background: #B01220;
 }
