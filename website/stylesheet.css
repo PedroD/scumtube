@@ -168,19 +168,53 @@ body {
     background: url("img/header_pattern2.png");
 }
 
-.certificates{
-    margin-top: -50pt;
-    text-align: center;
+.about-row {
+    display: table;
     width: 100%;
-    height: 150pt;
+    min-height: 70pt;
+    margin-bottom: 15pt;
 }
 
-.virus_certificate {
-    display: inline-block;
-    width: 125pt;
-    height: 125pt;
-    background: transparent url("img/virus_certificate.png") no-repeat scroll 0 0 / contain;
+.about-circle-container {
+    display: table-cell;
+    vertical-align: middle;
 }
+
+.about-circle {
+    border: 1px solid lightgrey;
+    border-radius: 50%;
+    width: 70pt;
+    height: 70pt; 
+    background: rgba(1, 1, 1, 0.05);
+}
+
+.about-icon {
+    margin-left: 22px;
+    margin-top: 22px;
+    width: 50px;
+    height: 50px;
+}
+
+.about-icon-boombox {
+    background: transparent url("img/icons/boombox.png") no-repeat scroll 0 0 / contain;
+}
+
+.about-icon-download {
+    background: transparent url("img/icons/download.png") no-repeat scroll 0 0 / contain;
+}
+
+.about-icon-history {
+    background: transparent url("img/icons/history.png") no-repeat scroll 0 0 / contain;
+}
+
+.about-text {
+    padding-left: 10pt;
+    display: table-cell;
+    min-height: 70pt;
+    width: 100%;
+    vertical-align: middle;
+}
+
 
 #screen-1 {
     width: 172pt;
