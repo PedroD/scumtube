@@ -17,6 +17,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,8 +36,11 @@ public class HistoryActivity extends AbstractActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_history);
 
-
+        AdView mAdView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").build(); //TODO remove addTestDevice for production
+        mAdView.loadAd(adRequest);
     }
 
     @Override
@@ -74,7 +80,6 @@ public class HistoryActivity extends AbstractActivity {
     }
 
     public void createAdapter(){
-        setContentView(R.layout.activity_history);
 
         listView = (ListView) findViewById(R.id.history_listview);
         listView.setEmptyView((View) findViewById(R.id.history_empty));

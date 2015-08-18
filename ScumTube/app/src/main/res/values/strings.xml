@@ -9,5 +9,6 @@
     <string name="history_activity">Music History</string>
     <string name="history_empty">The history is empty.</string>
     <string name="intent">Background Play</string>
+    <string name="banner_ad_unit_id">ca-app-pub-4389360825353387/3666187355</string>
 
 </resources>
