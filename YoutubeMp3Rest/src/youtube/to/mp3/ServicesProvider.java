@@ -56,7 +56,7 @@ public final class ServicesProvider {
 			public DownloadThread(Semaphore sem) {
 				this.sem = sem;
 			}
-
+			
 			private boolean fetchVideoInfoFromServer() throws Exception {
 				LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
 						"org.apache.commons.logging.impl.NoOpLog");
@@ -70,18 +70,14 @@ public final class ServicesProvider {
 					webClient.getOptions().setJavaScriptEnabled(true);
 					webClient.getOptions().setRedirectEnabled(true);
 
-					final HtmlPage page = webClient.getPage("http://www.youtube2mp3.cc");
+					final HtmlPage page = webClient.getPage("http://www.video2mp3.at/api/" + VideoRequest.this.videoId + "/");
 
-					final HtmlTextInput textField = (HtmlTextInput) page.getElementById("video");
-					final HtmlButton button = (HtmlButton) page.getElementById("button");
-					final HtmlAnchor an = (HtmlAnchor) page.getElementById("download");
-
-					textField.setValueAttribute("https://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
-					button.click();
+					final HtmlAnchor an = (HtmlAnchor) page.getElementById("dlsrc");
+					
 
 					while (!an.getAttribute("href").toString().contains("http")) {
 						try {
-							if (page.getElementById("error") != null)
+							if (page.getElementById("title").asText().equals("We cant convert this video. Please try another video."))
 								return false;
 						} catch (Exception e) {
 						}
