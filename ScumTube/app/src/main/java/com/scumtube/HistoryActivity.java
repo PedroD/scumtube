@@ -33,17 +33,17 @@ public class HistoryActivity extends AbstractActivity {
         setContentView(R.layout.activity_history);
 
         AdView mAdView = (AdView) findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").build(); //TODO remove addTestDevice for production
+        AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").addTestDevice("58B2FFDEEAA2B8B16A6A3969DCEB6570").build(); //TODO remove addTestDevice for production
         mAdView.loadAd(adRequest);
     }
 
     @Override
-    public void onNewIntent(Intent intent){
+    public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (intent.getExtras() != null) {
             final Bundle extras = intent.getExtras();
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
-            if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)){
+            if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)) {
                 Log.i(ScumTubeApplication.TAG, "Intent");
                 adapter.notifyDataSetChanged();
             }
@@ -54,7 +54,7 @@ public class HistoryActivity extends AbstractActivity {
     }
 
 
-    public void getView(){
+    public void getView() {
         MusicList.loadMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
 
         createAdapter();
@@ -71,7 +71,7 @@ public class HistoryActivity extends AbstractActivity {
         });
 
         listView.setOnItemLongClickListener(
-                new AdapterView.OnItemLongClickListener(){
+                new AdapterView.OnItemLongClickListener() {
 
                     @Override
                     public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
@@ -80,8 +80,8 @@ public class HistoryActivity extends AbstractActivity {
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             public boolean onMenuItemClick(MenuItem item) {
                                 int id = item.getItemId();
-                                switch (id){
-                                    case R.id.history_menu_delete :
+                                switch (id) {
+                                    case R.id.history_menu_delete:
                                         Music musicItem = (Music) parent.getItemAtPosition(position);
                                         MusicList.remove(musicItem);
                                         MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
@@ -99,7 +99,7 @@ public class HistoryActivity extends AbstractActivity {
         hasView = true;
     }
 
-    public void createAdapter(){
+    public void createAdapter() {
 
         listView = (ListView) findViewById(R.id.history_listview);
         listView.setEmptyView((View) findViewById(R.id.history_empty));
@@ -111,28 +111,28 @@ public class HistoryActivity extends AbstractActivity {
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         Log.i(ScumTubeApplication.TAG, "onResume");
-        if(!hasView){
+        if (!hasView) {
             getView();
         }
     }
 
     @Override
-    public void onPause(){
+    public void onPause() {
         super.onPause();
         hasView = false;
     }
 
     @Override
-    public void finish(){
+    public void finish() {
         super.finish();
         hasView = false;
     }
 
 
-    public void sendHomeIntent(){
+    public void sendHomeIntent() {
         Intent i = new Intent(Intent.ACTION_MAIN);
         i.addCategory(Intent.CATEGORY_HOME);
         startActivity(i);
@@ -177,7 +177,6 @@ public class HistoryActivity extends AbstractActivity {
         ImageView cover;
         TextView title;
     }
-
 
 
 }

@@ -364,6 +364,9 @@ public class PlayerService extends AbstractService {
             PendingIntent downloadPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
+            intent = new Intent(this, HistoryActivity.class);
+            PendingIntent historyPendingIntent = PendingIntent.getService(PlayerService.this, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
 
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
@@ -377,6 +380,9 @@ public class PlayerService extends AbstractService {
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_download,
                             downloadPendingIntent);
+            mSmallNotificationView
+                    .setOnClickPendingIntent(R.id.notification_small_imageview_albumart,
+                            historyPendingIntent);
 
             mSmallNotificationView
                     .setTextViewText(R.id.notification_small_textview, ScumTubeApplication.APP_NAME);
@@ -404,6 +410,9 @@ public class PlayerService extends AbstractService {
                 mLargeNotificationView
                         .setOnClickPendingIntent(R.id.notification_large_imageview_download,
                                 downloadPendingIntent);
+                mLargeNotificationView
+                        .setOnClickPendingIntent(R.id.notification_large_imageview_albumart,
+                                historyPendingIntent);
 
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
                         ScumTubeApplication.APP_NAME);
