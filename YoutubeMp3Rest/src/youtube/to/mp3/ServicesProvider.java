@@ -20,15 +20,16 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public final class ServicesProvider {
 
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
-	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 3;
+	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
@@ -69,22 +70,29 @@ public final class ServicesProvider {
 					webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 					webClient.getOptions().setJavaScriptEnabled(true);
 					webClient.getOptions().setRedirectEnabled(true);
+					webClient.getOptions().setThrowExceptionOnScriptError(false);
 
-					final HtmlPage page = webClient.getPage("http://www.video2mp3.at/api/" + VideoRequest.this.videoId + "/");
-
-					final HtmlAnchor an = (HtmlAnchor) page.getElementById("dlsrc");
+					final HtmlPage page = webClient.getPage("http://www.theyoump3.com/download.php?url=http://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
+										
+					final HtmlDivision div = (HtmlDivision) page.getElementById("dl_link");
 					
-
-					while (!an.getAttribute("href").toString().contains("http")) {
-						try {
-							if (page.getElementById("title").asText().equals("We cant convert this video. Please try another video."))
-								return false;
-						} catch (Exception e) {
-						}
+					while (div.getAttribute("style").contains("display:none")) {
 						Thread.sleep(1000);
 					}
+					
+					if(page.getElementById("error_text") != null && !page.getElementById("error_text").getAttribute("style").contains("display: none") ){
+						webClient.close();
+						return false;
+					}
+					
+					final DomNodeList<HtmlElement> a = div.getElementsByTagName("a");
+					
+					for(HtmlElement x : a){
+						if(!x.getAttribute("style").contains("display:none")){
+							VideoRequest.this.mp3Url = x.getAttribute("href").toString();
+						}
+					}
 
-					VideoRequest.this.mp3Url = an.getAttribute("href").toString();
 					VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
 					VideoRequest.this.title = page.getElementById("title").asText();
 				} catch (ElementNotFoundException e) {
@@ -124,7 +132,7 @@ public final class ServicesProvider {
 				}
 				if (!success) {
 					VideoRequest.this.abortRequest(
-							"There was an error connecting Youtube or the video length is greater than 120 minutes.");
+							"There was an error connecting Youtube.");
 				}
 				sem.release();
 				return;
