@@ -17,7 +17,6 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -26,16 +25,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
@@ -43,10 +38,6 @@ import static com.scumtube.ScumTubeApplication.mSmallLoadingNotificationView;
 import static com.scumtube.ScumTubeApplication.mSmallNotificationView;
 
 public class PlayerService extends AbstractService {
-
-    public static final String PREFS_NAME = "scumtube_preferences";
-    public static final String PREFS_ISLOOPING = "isLooping";
-    public static final String PREFS_MUSICLIST = "MusicList";
 
     public static final String ACTION_PLAYPAUSE = "com.scumtube.ACTION_PLAYPAUSE";
     public static final String ACTION_PLAY = "com.scumtube.ACTION_PLAY";
@@ -74,15 +65,6 @@ public class PlayerService extends AbstractService {
     private Object canExitLock = new ReentrantLock();
 
     public PlayerService() {
-    }
-
-    public static String encodeBitmapTobase64(Bitmap image) {
-        Bitmap imagex = image;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        imagex.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] b = baos.toByteArray();
-        String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
-        return imageEncoded;
     }
 
     @Override
@@ -443,7 +425,7 @@ public class PlayerService extends AbstractService {
     public void updateMusicList() {
         MusicList.addFirst(new Music(sStreamTitle, sCover, sYtUrl));
         notifyHistoryActivity();
-        saveMusicList();
+        MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
     }
 
     public void notifyHistoryActivity() {
@@ -455,37 +437,17 @@ public class PlayerService extends AbstractService {
         }
     }
 
-    public void saveMusicList() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        ArrayList<Music> a = MusicList.getMusicArrayList();
-        JSONArray musicJsonArray = new JSONArray();
-        for (Music m : a) {
-            JSONObject musicJsonObject = new JSONObject();
-            try {
-                musicJsonObject.put("title", m.getTitle());
-                musicJsonObject.put("cover", encodeBitmapTobase64(m.getCover()));
-                musicJsonObject.put("ytUrl", m.getYtUrl());
-                musicJsonArray.put(musicJsonObject);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        editor.putString(PREFS_MUSICLIST, musicJsonArray.toString());
-        editor.commit();
-
-    }
 
     public void saveIsLooping() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean(PREFS_ISLOOPING, mMediaPlayer.isLooping());
+        editor.putBoolean(ScumTubeApplication.PREFS_ISLOOPING, mMediaPlayer.isLooping());
         editor.commit();
     }
 
     public void loadLoopPreferencesFromStorage() {
-        SharedPreferences preferences = getSharedPreferences(PREFS_NAME, 0);
-        mMediaPlayer.setLooping(preferences.getBoolean(PREFS_ISLOOPING, false));
+        SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
+        mMediaPlayer.setLooping(preferences.getBoolean(ScumTubeApplication.PREFS_ISLOOPING, false));
     }
 
     private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {

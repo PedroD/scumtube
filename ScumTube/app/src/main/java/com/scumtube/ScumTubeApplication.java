@@ -9,6 +9,10 @@ public class ScumTubeApplication extends Application {
     public static final String APP_NAME = "ScumTube";
     public static final String TAG = "ScumTubeLog";
 
+    public static final String PREFS_NAME = "scumtube_preferences";
+    public static final String PREFS_ISLOOPING = "isLooping";
+    public static final String PREFS_MUSICLIST = "MusicList";
+
     public static RemoteViews mSmallNotificationView;
     public static RemoteViews mLargeNotificationView;
     public static RemoteViews mSmallLoadingNotificationView;
@@ -34,5 +38,4 @@ public class ScumTubeApplication extends Application {
                     R.layout.notification_small_compat);
         }
     }
-
 }

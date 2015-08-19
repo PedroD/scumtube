@@ -34,5 +34,4 @@ public class Music implements Serializable{
     public Bitmap getCover() {
         return cover;
     }
-
 }

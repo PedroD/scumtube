@@ -2,27 +2,21 @@ package com.scumtube;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -61,7 +55,7 @@ public class HistoryActivity extends AbstractActivity {
 
 
     public void getView(){
-        loadMusicList();
+        MusicList.loadMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
 
         createAdapter();
 
@@ -75,6 +69,32 @@ public class HistoryActivity extends AbstractActivity {
                 sendHomeIntent();
             }
         });
+
+        listView.setOnItemLongClickListener(
+                new AdapterView.OnItemLongClickListener(){
+
+                    @Override
+                    public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
+                        PopupMenu popup = new PopupMenu(HistoryActivity.this, view.findViewById(R.id.history_item_title));
+                        popup.getMenuInflater().inflate(R.menu.menu_history, popup.getMenu());
+                        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                            public boolean onMenuItemClick(MenuItem item) {
+                                int id = item.getItemId();
+                                switch (id){
+                                    case R.id.history_menu_delete :
+                                        Music musicItem = (Music) parent.getItemAtPosition(position);
+                                        MusicList.remove(musicItem);
+                                        MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
+                                        getView();
+                                }
+                                return true;
+                            }
+                        });
+                        popup.show();
+                        return true;
+                    }
+                }
+        );
 
         hasView = true;
     }
@@ -159,28 +179,5 @@ public class HistoryActivity extends AbstractActivity {
     }
 
 
-    public void loadMusicList() {
-        if (MusicList.getMusicArrayList().isEmpty()) {
-            SharedPreferences preferences = getSharedPreferences(PlayerService.PREFS_NAME, Context.MODE_PRIVATE);
-            String musicJsonArrayString = preferences.getString(PlayerService.PREFS_MUSICLIST, null);
-            if (musicJsonArrayString != null) {
-                try {
-                    JSONArray musicJsonArray = new JSONArray(musicJsonArrayString);
-                    for (int i = 0; i < musicJsonArray.length(); i++) {
-                        JSONObject musicJsonObject = (JSONObject) musicJsonArray.get(i);
-                        MusicList.add(new Music((String) musicJsonObject.get("title"),
-                                decodeBitmapBase64((String) musicJsonObject.get("cover")),
-                                (String) musicJsonObject.get("ytUrl")));
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
-    public static Bitmap decodeBitmapBase64(String input) {
-        byte[] decodedByte = Base64.decode(input, 0);
-        return BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
-    }
 }
