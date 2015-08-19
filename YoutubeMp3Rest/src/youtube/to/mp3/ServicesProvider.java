@@ -77,13 +77,15 @@ public final class ServicesProvider {
 					final HtmlDivision div = (HtmlDivision) page.getElementById("dl_link");
 					
 					while (!div.getAttribute("style").contains("display: block")) {
+						if(page.getElementById("error_text") != null && !page.getElementById("error_text").getAttribute("style").contains("display: none") ){
+							webClient.close();
+							return false;
+						}
 						Thread.sleep(1000);
+						
 					}
 					
-					if(page.getElementById("error_text") != null && !page.getElementById("error_text").getAttribute("style").contains("display: none") ){
-						webClient.close();
-						return false;
-					}
+					
 					
 					final DomNodeList<HtmlElement> a = div.getElementsByTagName("a");
 					
