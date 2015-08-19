@@ -76,7 +76,7 @@ public final class ServicesProvider {
 										
 					final HtmlDivision div = (HtmlDivision) page.getElementById("dl_link");
 					
-					while (div.getAttribute("style").contains("display:none")) {
+					while (!div.getAttribute("style").contains("display: block")) {
 						Thread.sleep(1000);
 					}
 					
