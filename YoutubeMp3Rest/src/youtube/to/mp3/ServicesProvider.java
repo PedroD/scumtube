@@ -35,7 +35,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 public final class ServicesProvider {
 
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
-	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 3;
+	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
