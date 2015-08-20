@@ -364,8 +364,8 @@ public class PlayerService extends AbstractService {
             PendingIntent downloadPendingIntent = PendingIntent
                     .getService(PlayerService.this, 0, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-            intent = new Intent(this, HistoryActivity.class);
-            PendingIntent historyPendingIntent = PendingIntent.getService(PlayerService.this, 0, intent,
+            intent = new Intent(PlayerService.this, HistoryActivity.class);
+            PendingIntent historyPendingIntent = PendingIntent.getActivity(PlayerService.this, 0, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT);
 
             mSmallNotificationView
