@@ -87,7 +87,7 @@ public final class ServicesProvider {
 							VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + VideoRequest.this.videoId
 									+ "/default.jpg";
 							VideoRequest.this.title = jsonObject.getString("title");
-							VideoRequest.this.mp3Url = "www.theyoump3.com/get?ab=128&video_id="
+							VideoRequest.this.mp3Url = "http://www.theyoump3.com/get?ab=128&video_id="
 									+ VideoRequest.this.videoId + "&h=" + jsonObject.getString("h");
 							return true;
 						}
