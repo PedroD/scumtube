@@ -1,5 +1,9 @@
 package youtube.to.mp3;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,7 +12,13 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Header;
@@ -20,16 +30,12 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomNodeList;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlDivision;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 public final class ServicesProvider {
 
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
-	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
+	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 3;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
@@ -57,8 +63,42 @@ public final class ServicesProvider {
 			public DownloadThread(Semaphore sem) {
 				this.sem = sem;
 			}
-			
+
+
 			private boolean fetchVideoInfoFromServer() throws Exception {
+				String requestUrl = "http://www.theyoump3.com/a/pushItem/?item=https://www.youtube.com/watch?v="
+						+ VideoRequest.this.videoId;
+				String httpResponse = getHttpResponse(requestUrl);
+				if (httpResponse == null || httpResponse.contains("ERROR")) {
+					return false;
+				}
+				
+				String infoUrl = "http://www.theyoump3.com/a/itemInfo/?video_id=" + VideoRequest.this.videoId;				
+				JSONObject jsonObject;
+				while (true) {
+					httpResponse = getHttpResponse(infoUrl);
+					if (httpResponse == null || httpResponse.contains("ERROR")) {
+						return false;
+					}					
+					httpResponse = httpResponse.substring(7);					
+					jsonObject = new JSONObject(httpResponse);
+					if (jsonObject.has("status")) {
+						if (jsonObject.get("status").equals("serving")) {
+							VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + VideoRequest.this.videoId
+									+ "/default.jpg";
+							VideoRequest.this.title = jsonObject.getString("title");
+							VideoRequest.this.mp3Url = "www.theyoump3.com/get?ab=128&video_id="
+									+ VideoRequest.this.videoId + "&h=" + jsonObject.getString("h");
+							return true;
+						}
+					} else {
+						return false;
+					}
+					Thread.sleep(2000);
+				}
+			}
+			
+			public String getHttpResponse(String url) throws IOException {
 				LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
 						"org.apache.commons.logging.impl.NoOpLog");
 				java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
@@ -72,38 +112,18 @@ public final class ServicesProvider {
 					webClient.getOptions().setRedirectEnabled(true);
 					webClient.getOptions().setThrowExceptionOnScriptError(false);
 
-					final HtmlPage page = webClient.getPage("http://www.theyoump3.com/download.php?url=http://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
-										
-					final HtmlDivision div = (HtmlDivision) page.getElementById("dl_link");
+					final HtmlPage page = webClient.getPage(url);					
 					
-					while (!div.getAttribute("style").contains("display: block")) {
-						if(page.getElementById("error_text") != null && !page.getElementById("error_text").getAttribute("style").contains("display: none") ){
-							webClient.close();
-							return false;
-						}
-						Thread.sleep(1000);
-						
-					}
+					webClient.close();
+					return page.getBody().asText();
 					
-					
-					
-					final DomNodeList<HtmlElement> a = div.getElementsByTagName("a");
-					
-					for(HtmlElement x : a){
-						if(!x.getAttribute("style").contains("display:none")){
-							VideoRequest.this.mp3Url = x.getAttribute("href").toString();
-						}
-					}
-
-					VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
-					VideoRequest.this.title = page.getElementById("title").asText();
 				} catch (ElementNotFoundException e) {
 					new Logger().log(Logger.LOG_ERROR, "Error scraping the website. " + e.getMessage());
 					e.printStackTrace();
 					if (webClient != null) {
 						webClient.close();
 					}
-					return false;
+					return null;
 				} catch (Exception e) {
 					e.printStackTrace();
 					if (webClient != null) {
@@ -111,8 +131,6 @@ public final class ServicesProvider {
 					}
 					throw e;
 				}
-				webClient.close();
-				return true;
 
 			}
 
@@ -133,8 +151,7 @@ public final class ServicesProvider {
 					}
 				}
 				if (!success) {
-					VideoRequest.this.abortRequest(
-							"There was an error connecting Youtube.");
+					VideoRequest.this.abortRequest("There was an error connecting Youtube.");
 				}
 				sem.release();
 				return;
@@ -169,7 +186,8 @@ public final class ServicesProvider {
 										.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
 								if (delta >= MAX_MINUTES_STORING_RESOLVED_REQUEST) {
 									toRemove.add(vr.getKey());
-									new Logger().log(Logger.LOG_INFO, "Removed old aborted request " + vr.getKey() + ".");
+									new Logger().log(Logger.LOG_INFO,
+											"Removed old aborted request " + vr.getKey() + ".");
 								}
 							}
 							for (String v : toRemove) {
@@ -231,7 +249,8 @@ public final class ServicesProvider {
 		private void download() {
 			while (retries < MAX_RETRIES) {
 				/*
-				 * Semaphore released only when the download finishes (with error or not).
+				 * Semaphore released only when the download finishes (with
+				 * error or not).
 				 */
 				final Semaphore sem = new Semaphore(0);
 				final Thread t = new DownloadThread(sem);
