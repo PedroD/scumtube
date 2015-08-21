@@ -1,9 +1,5 @@
 package youtube.to.mp3;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,13 +8,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.restlet.data.Header;
@@ -27,10 +17,12 @@ import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public final class ServicesProvider {
 
@@ -64,41 +56,41 @@ public final class ServicesProvider {
 				this.sem = sem;
 			}
 
+			private boolean theYouMp3Error = false;
+			private boolean youtube2Mp3Error = false;
+
+			private boolean getTheYouMp3Error() {
+				return this.theYouMp3Error;
+			}
+
+			private boolean getYoutube2Mp3Error() {
+				return this.youtube2Mp3Error;
+			}
+
+			private void flagTheYouMp3Error() {
+				this.theYouMp3Error = true;
+				new Logger().log(Logger.LOG_ERROR, "Error scraping the TheYouMp3 website.");
+			}
+
+			private void flagYoutube2Mp3Error() {
+				this.youtube2Mp3Error = true;
+				new Logger().log(Logger.LOG_ERROR, "Error scraping the Youtube2Mp3 website.");
+			}
+
+			private void flagTheYouMp3Error(String msg) {
+				this.theYouMp3Error = true;
+				new Logger().log(Logger.LOG_ERROR, "Error scraping the TheYouMp3 website. " + msg);
+			}
+
+			private void flagYoutube2Mp3Error(String msg) {
+				this.youtube2Mp3Error = true;
+				new Logger().log(Logger.LOG_ERROR, "Error scraping the Youtube2Mp3 website. " + msg);
+			}
 
 			private boolean fetchVideoInfoFromServer() throws Exception {
-				String requestUrl = "http://www.theyoump3.com/a/pushItem/?item=https://www.youtube.com/watch?v="
-						+ VideoRequest.this.videoId;
-				String httpResponse = getHttpResponse(requestUrl);
-				if (httpResponse == null || httpResponse.contains("ERROR")) {
-					return false;
-				}
-				
-				String infoUrl = "http://www.theyoump3.com/a/itemInfo/?video_id=" + VideoRequest.this.videoId;				
-				JSONObject jsonObject;
-				while (true) {
-					httpResponse = getHttpResponse(infoUrl);
-					if (httpResponse == null || httpResponse.contains("ERROR")) {
-						return false;
-					}					
-					httpResponse = httpResponse.substring(7);					
-					jsonObject = new JSONObject(httpResponse);
-					if (jsonObject.has("status")) {
-						if (jsonObject.get("status").equals("serving")) {
-							VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + VideoRequest.this.videoId
-									+ "/default.jpg";
-							VideoRequest.this.title = jsonObject.getString("title");
-							VideoRequest.this.mp3Url = "http://www.theyoump3.com/get?ab=128&video_id="
-									+ VideoRequest.this.videoId + "&h=" + jsonObject.getString("h");
-							return true;
-						}
-					} else {
-						return false;
-					}
-					Thread.sleep(2000);
-				}
-			}
-			
-			public String getHttpResponse(String url) throws IOException {
+				/*
+				 * Initializing HTMLUnit
+				 */
 				LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log",
 						"org.apache.commons.logging.impl.NoOpLog");
 				java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
@@ -106,32 +98,112 @@ public final class ServicesProvider {
 
 				WebClient webClient = null;
 				try {
+					/*
+					 * Initializing WebClient
+					 */
 					webClient = new WebClient(BrowserVersion.FIREFOX_38);
 					webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 					webClient.getOptions().setJavaScriptEnabled(true);
 					webClient.getOptions().setRedirectEnabled(true);
-					webClient.getOptions().setThrowExceptionOnScriptError(false);
 
-					final HtmlPage page = webClient.getPage(url);					
-					
-					webClient.close();
-					return page.getBody().asText();
-					
-				} catch (ElementNotFoundException e) {
+					// TheYouMp3
+					HtmlPage theYouMp3Page = null;
+					String theYouMp3HttpResponse = null;
+					try {
+						theYouMp3Page = webClient
+								.getPage("http://www.theyoump3.com/a/pushItem/?item=https://www.youtube.com/watch?v="
+										+ VideoRequest.this.videoId);
+						theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
+						if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
+							flagTheYouMp3Error();
+						}
+					} catch (Exception e) {
+						flagTheYouMp3Error(e.getMessage());
+					}
+
+					// Youtube2Mp3
+					HtmlPage youtube2Mp3Page = null;
+					HtmlAnchor youtube2Mp3An = null;
+					try {
+						youtube2Mp3Page = webClient.getPage("http://www.youtube2mp3.cc");
+						final HtmlTextInput youtube2Mp3TextField = (HtmlTextInput) youtube2Mp3Page
+								.getElementById("video");
+						final HtmlButton youtube2Mp3Button = (HtmlButton) youtube2Mp3Page.getElementById("button");
+						youtube2Mp3An = (HtmlAnchor) youtube2Mp3Page.getElementById("download");
+						youtube2Mp3TextField
+								.setValueAttribute("https://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
+						youtube2Mp3Button.click();
+					} catch (Exception e) {
+						flagYoutube2Mp3Error(e.getMessage());
+					}
+
+					/*
+					 * While waiting for one response
+					 */
+					JSONObject theYouMp3JsonObject;
+					while (true) {
+						if (getTheYouMp3Error() && getYoutube2Mp3Error()) {
+							webClient.close();
+							return false;
+						}
+
+						// TheYouMp3
+						if (!theYouMp3Error) {
+							try {
+								theYouMp3Page = webClient.getPage(
+										"http://www.theyoump3.com/a/itemInfo/?video_id=" + VideoRequest.this.videoId);
+								theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
+								if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
+									flagTheYouMp3Error();
+								}
+								theYouMp3HttpResponse = theYouMp3HttpResponse.substring(7);
+								theYouMp3JsonObject = new JSONObject(theYouMp3HttpResponse);
+								if (theYouMp3JsonObject.has("status")) {
+									if (theYouMp3JsonObject.get("status").equals("serving")) {
+										VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/"
+												+ VideoRequest.this.videoId + "/default.jpg";
+										VideoRequest.this.title = theYouMp3JsonObject.getString("title");
+										VideoRequest.this.mp3Url = "http://www.theyoump3.com/get?ab=128&video_id="
+												+ VideoRequest.this.videoId + "&h="
+												+ theYouMp3JsonObject.getString("h");
+										webClient.close();
+										return true;
+									}
+								} else {
+									flagTheYouMp3Error();
+								}
+							} catch (Exception e) {
+								flagTheYouMp3Error(e.getMessage());
+							}
+						}
+
+						// Youtube2Mp3
+						if (!youtube2Mp3Error) {
+							try {
+								if (youtube2Mp3An.getAttribute("href").toString().contains("http")) {
+									VideoRequest.this.mp3Url = youtube2Mp3An.getAttribute("href").toString();
+									VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
+									VideoRequest.this.title = youtube2Mp3Page.getElementById("title").asText();
+									webClient.close();
+									return true;
+								} else if (youtube2Mp3Page.getElementById("error") != null) {
+									flagYoutube2Mp3Error();
+								}
+							} catch (Exception e) {
+								flagYoutube2Mp3Error(e.getMessage());
+							}
+						}
+						Thread.sleep(1000);
+					}
+
+				} catch (Exception e) {
 					new Logger().log(Logger.LOG_ERROR, "Error scraping the website. " + e.getMessage());
 					e.printStackTrace();
 					if (webClient != null) {
 						webClient.close();
 					}
-					return null;
-				} catch (Exception e) {
-					e.printStackTrace();
-					if (webClient != null) {
-						webClient.close();
-					}
-					throw e;
+					return false;
 				}
-
 			}
 
 			@Override
@@ -151,7 +223,7 @@ public final class ServicesProvider {
 					}
 				}
 				if (!success) {
-					VideoRequest.this.abortRequest("There was an error connecting Youtube.");
+					VideoRequest.this.abortRequest("There was an error connecting to Youtube.");
 				}
 				sem.release();
 				return;
