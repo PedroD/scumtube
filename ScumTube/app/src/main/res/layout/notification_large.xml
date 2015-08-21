@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/notification_large_wrapper"
                 android:layout_width="match_parent"
                 android:layout_height="128dp"
                 android:background="@color/primary_background_inverted">
 
     <ImageView
-        android:id="@+id/notification_large_imageview_albumart"
+        android:id="@+id/notification_large_imageview_cover"
         android:layout_width="128dip"
         android:layout_height="128dip"
         android:adjustViewBounds="false"
@@ -25,7 +26,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toLeftOf="@id/notification_large_imageview_exit"
-        android:layout_toRightOf="@id/notification_large_imageview_albumart"
+        android:layout_toRightOf="@id/notification_large_imageview_cover"
         android:paddingLeft="@dimen/padding_small"
         android:paddingTop="@dimen/padding_small"
         android:singleLine="true"
@@ -38,7 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/notification_large_textview"
         android:layout_toLeftOf="@id/notification_large_imageview_exit"
-        android:layout_toRightOf="@id/notification_large_imageview_albumart"
+        android:layout_toRightOf="@id/notification_large_imageview_cover"
         android:paddingLeft="@dimen/padding_small"
         android:lines="2"
         android:textColor="@color/secondary_textcolor_inverted"
@@ -50,7 +51,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@id/notification_large_imageview_albumart"
+        android:layout_toRightOf="@id/notification_large_imageview_cover"
         android:orientation="horizontal">
 
         <ImageView

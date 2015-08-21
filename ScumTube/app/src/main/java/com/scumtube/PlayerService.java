@@ -39,13 +39,13 @@ import static com.scumtube.ScumTubeApplication.mSmallNotificationView;
 
 public class PlayerService extends AbstractService {
 
-    public static final String ACTION_PLAYPAUSE = "com.scumtube.ACTION_PLAYPAUSE";
-    public static final String ACTION_PLAY = "com.scumtube.ACTION_PLAY";
-    public static final String ACTION_PAUSE = "com.scumtube.ACTION_PAUSE";
-    public static final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
-    public static final String ACTION_EXITLOADING = "com.scumtube.ACTION_EXITLOADING";
-    public static final String ACTION_LOOP = "com.scumtube.ACTION_LOOP";
-    public static final String ACTION_DOWNLOAD = "com.scumtube.ACTION_DOWNLOAD";
+    private static final String ACTION_PLAYPAUSE = "com.scumtube.ACTION_PLAYPAUSE";
+    private static final String ACTION_PLAY = "com.scumtube.ACTION_PLAY";
+    private static final String ACTION_PAUSE = "com.scumtube.ACTION_PAUSE";
+    private static final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
+    private static final String ACTION_EXITLOADING = "com.scumtube.ACTION_EXITLOADING";
+    private static final String ACTION_LOOP = "com.scumtube.ACTION_LOOP";
+    private static final String ACTION_DOWNLOAD = "com.scumtube.ACTION_DOWNLOAD";
 
 
     public static final String EXTRA_DATASETCHANGED = "Data Set Changed";
@@ -236,9 +236,11 @@ public class PlayerService extends AbstractService {
         downloadTask = new RequestMp3Task(sYtVideoId, new Runnable() {
             @Override
             public void run() {
-                final Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(sStreamMp3Url));
-                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(browserIntent);
+                final Intent downloadIntent = new Intent(PlayerService.this, DownloadService.class);
+                downloadIntent.putExtra("mp3Url", sStreamMp3Url);
+                downloadIntent.putExtra("title", sStreamTitle);
+                downloadIntent.putExtra("ytUrl", sYtUrl);
+                startService(downloadIntent);
             }
         });
         downloadTask.start();
@@ -252,7 +254,7 @@ public class PlayerService extends AbstractService {
                             PendingIntent.FLAG_UPDATE_CURRENT);
 
             mSmallLoadingNotificationView
-                    .setOnClickPendingIntent(R.id.notification_loading_small_imageview_exit,
+                    .setOnClickPendingIntent(R.id.notification_loading_imageview_exit,
                             exitPendingIntent);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
@@ -270,12 +272,9 @@ public class PlayerService extends AbstractService {
     }
 
     public void drawCover() {
-        mSmallNotificationView
-                .setImageViewBitmap(R.id.notification_small_imageview_albumart,
-                        sCover);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mLargeNotificationView
-                    .setImageViewBitmap(R.id.notification_large_imageview_albumart,
+                    .setImageViewBitmap(R.id.notification_large_imageview_cover,
                             sCover);
         }
         updateNotification();
@@ -381,7 +380,7 @@ public class PlayerService extends AbstractService {
                     .setOnClickPendingIntent(R.id.notification_small_imageview_download,
                             downloadPendingIntent);
             mSmallNotificationView
-                    .setOnClickPendingIntent(R.id.notification_small_imageview_albumart,
+                    .setOnClickPendingIntent(R.id.notification_small_wrapper,
                             historyPendingIntent);
 
             mSmallNotificationView
@@ -411,7 +410,7 @@ public class PlayerService extends AbstractService {
                         .setOnClickPendingIntent(R.id.notification_large_imageview_download,
                                 downloadPendingIntent);
                 mLargeNotificationView
-                        .setOnClickPendingIntent(R.id.notification_large_imageview_albumart,
+                        .setOnClickPendingIntent(R.id.notification_large_wrapper,
                                 historyPendingIntent);
 
                 mLargeNotificationView.setTextViewText(R.id.notification_large_textview,
