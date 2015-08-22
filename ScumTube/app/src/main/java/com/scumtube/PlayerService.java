@@ -1,5 +1,6 @@
 package com.scumtube;
 
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -15,11 +16,12 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AlertDialog;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
@@ -552,17 +554,10 @@ public class PlayerService extends AbstractService {
                             MessageDigest md = MessageDigest.getInstance("MD5");
                             final String d = new String(md.digest(bytesOfMessage), "UTF-8");
                             if (!ScumTubeApplication._T.equals(d)) {
-                                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                                builder.setMessage("A new version of ScumTube was released! You need to update.")
-                                        .setCancelable(false)
-                                        .setPositiveButton("Update", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
-                                                startActivity(browserIntent);
-                                            }
-                                        });
-                                AlertDialog alert = builder.create();
-                                alert.show();
+                                showToast("A new version of ScumTube was released! You need to update.");
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(browserIntent);
                                 return;
                             }
                         }
