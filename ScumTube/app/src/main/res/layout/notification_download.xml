@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/notification_download_wrapper"
               android:orientation="horizontal"
               android:layout_width="match_parent"
               android:layout_height="64dip"
@@ -8,21 +9,33 @@
         android:orientation="horizontal"
         android:layout_width="fill_parent"
         android:layout_height="64dip"
-        android:layout_weight="0.2">
+        android:layout_weight="0.2"
+        android:layout_marginLeft="10dip">
         <TextView
             android:id="@+id/notification_download_textview"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="20dip"
             android:singleLine="true"
             android:textColor="@color/primary_textcolor_inverted"
-            android:textSize="@dimen/text_size_small"/>
+            android:textSize="@dimen/text_size_medium"/>
 
         <ProgressBar
             android:id="@+id/notification_download_progressbar"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/notification_download_textview"
+            android:indeterminate="true"
             style="@android:style/Widget.Holo.ProgressBar.Horizontal"/>
+
+        <TextView
+            android:id="@+id/notification_download_textview_progress"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/notification_download_progressbar"
+            android:singleLine="true"
+            android:textColor="@color/primary_textcolor_inverted"
+            android:textSize="@dimen/text_size_small"
+            android:text="@string/download_connecting"/>
     </RelativeLayout>
 
     <ImageView

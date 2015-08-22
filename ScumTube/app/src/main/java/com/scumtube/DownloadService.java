@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -26,6 +27,7 @@ public class DownloadService extends AbstractService {
     private int currentNotificationId = 2;
 
     private final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
+    private final String ACTION_OPENMUSIC = "com.scumtube.ACTION_OPENMUSIC";
 
     private ArrayList<MusicDownloading> musicDownloadingArrayList = new ArrayList<MusicDownloading>();
     private CheckProgress checkProgress;
@@ -47,9 +49,33 @@ public class DownloadService extends AbstractService {
         updateExternalStorageState();
 
         if (intent.getAction() != null) {
-            if(intent.getAction().equals(ACTION_EXIT)) {
+            if (intent.getAction().equals(ACTION_EXIT)) {
                 if (intent.hasExtra("notificationId")) {
                     exit(intent.getExtras().getInt("notificationId"));
+                }
+            } else if (intent.getAction().equals(ACTION_OPENMUSIC)) {
+                if (intent.hasExtra("notificationId")) {
+                    int notificationId = intent.getExtras().getInt("notificationId");
+                    final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
+                    if (m != null) {
+                        final File file = new File(Environment.getExternalStorageDirectory() + "/ScumTube/" + m.getMusic().getTitle() + ".mp3");
+                        if (file.exists()) {
+                            final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                            getApplicationContext().sendBroadcast(it);
+                            final Intent openMusicIntent = new Intent();
+                            openMusicIntent.setAction(android.content.Intent.ACTION_VIEW);
+                            openMusicIntent.setDataAndType(Uri.fromFile(file), "audio/*");
+                            openMusicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(openMusicIntent);
+                            exit(notificationId);
+                        } else{
+                            showToast("The file doesn't exist.");
+                        }
+                    } else {
+                        showToast("There was an error opening the file.");
+                    }
+                } else {
+                    showToast("There was an error opening the file.");
                 }
             }
         } else if (!externalStorageWriteable) {
@@ -69,19 +95,27 @@ public class DownloadService extends AbstractService {
 
     private void exit(int notificationId) {
         Log.i(ScumTubeApplication.TAG, "Exiting: " + notificationId);
-        for (MusicDownloading m : musicDownloadingArrayList) {
-            if(m.getNotificationId() == notificationId){
-                Log.i(ScumTubeApplication.TAG, "Found exiting: " + m.getMusic().getTitle() + " :: " + " :: " + notificationId);
-                musicDownloadingArrayList.remove(m);
-                m.exit();
-                return;
-            }
 
+        final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
+        if (m != null) {
+            Log.i(ScumTubeApplication.TAG, "Found exiting: " + m.getMusic().getTitle() + " :: " + " :: " + notificationId);
+            musicDownloadingArrayList.remove(m);
+            m.exit();
+            return;
         }
     }
 
+    private MusicDownloading getMusicDownloadingByNotificationId(int notificationId) {
+        for (MusicDownloading m : musicDownloadingArrayList) {
+            if (notificationId == m.getNotificationId()) {
+                return m;
+            }
+        }
+        return null;
+    }
+
     private void updateExternalStorageState() {
-        String state = Environment.getExternalStorageState();
+        final String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             externalStorageWriteable = true;
         } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -108,32 +142,32 @@ public class DownloadService extends AbstractService {
         public MusicDownloading(Music music, int notificationId, String mp3Url) {
             this.music = music;
             this.notificationId = notificationId;
-            downloadingThread = new DownloadMp3(music.getTitle(), mp3Url, notificationId, createDownloadNotification());
+            downloadingThread = new DownloadMp3(music.getTitle(), mp3Url, notificationId, createDownloadNotification(android.R.drawable.stat_sys_download));
             downloadingThread.start();
         }
 
-        public Notification createDownloadNotification() {
+        public Notification createDownloadNotification(int icon) {
             Log.i(ScumTubeApplication.TAG, "Creating download progress notification: " + music.getTitle());
 
-            Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
+            final Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
                     DownloadService.class);
             intent.putExtra("notificationId", notificationId);
-            PendingIntent exitPendingIntent = PendingIntent
+            final PendingIntent exitPendingIntent = PendingIntent
                     .getService(DownloadService.this, notificationId, intent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
 
-            RemoteViews notificationView = createDownloadNotificationView();
+            final RemoteViews notificationView = createDownloadNotificationView();
             notificationView
                     .setOnClickPendingIntent(R.id.notification_download_imageview_exit,
                             exitPendingIntent);
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     DownloadService.this)
-                    .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
+                    .setSmallIcon(icon).setContentTitle(ScumTubeApplication.APP_NAME)
                     .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
                     .setContent(notificationView);
 
-            Notification notification = builder.build();
+            final Notification notification = builder.build();
 
             final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(notificationId, notification);
@@ -148,10 +182,28 @@ public class DownloadService extends AbstractService {
         }
 
         public void updateNotification(Notification notification, int notificationId, int progress) {
-            notification.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
-
-            final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.notify(notificationId, notification);
+            if (progress < 100) {
+                notification.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
+                notification.contentView.setTextViewText(R.id.notification_download_textview_progress, progress + "%");
+                final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.notify(notificationId, notification);
+            } else {
+                Notification n = createDownloadNotification(android.R.drawable.stat_sys_download_done);
+                n.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
+                n.contentView.setTextViewText(
+                        R.id.notification_download_textview_progress, progress + "% " + getString(R.string.download_done));
+                Intent intent = new Intent(ACTION_OPENMUSIC, null, DownloadService.this,
+                        DownloadService.class);
+                intent.putExtra("notificationId", notificationId);
+                PendingIntent exitPendingIntent = PendingIntent
+                        .getService(DownloadService.this, notificationId, intent,
+                                PendingIntent.FLAG_UPDATE_CURRENT);
+                n.contentView
+                        .setOnClickPendingIntent(R.id.notification_download_wrapper,
+                                exitPendingIntent);
+                final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.notify(notificationId, n);
+            }
         }
 
         public void exit() {
@@ -209,18 +261,18 @@ public class DownloadService extends AbstractService {
                 // this will be useful so that you can show a typical 0-100% progress bar
                 int fileLength = connection.getContentLength();
 
-                if(isInterrupted()){
+                if (isInterrupted()) {
                     Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
                     return;
                 }
-                Log.i(ScumTubeApplication.TAG, "Output directory: " + Environment.getExternalStorageDirectory() + "/" + title + ".mp3");
+                Log.i(ScumTubeApplication.TAG, "Output directory: " + Environment.getExternalStorageDirectory() + "/ScumTube/" + title + ".mp3");
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                String filePath = Environment.getExternalStorageDirectory() + "/" + title + ".mp3";
+                String filePath = Environment.getExternalStorageDirectory() + "/ScumTube/" + title + ".mp3";
                 OutputStream output = new FileOutputStream(filePath);
 
-                if(isInterrupted()){
+                if (isInterrupted()) {
                     Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
                     output.close();
                     input.close();
@@ -234,7 +286,7 @@ public class DownloadService extends AbstractService {
                     total += count;
                     progress = (int) (total * 100 / fileLength);
                     output.write(data, 0, count);
-                    if(isInterrupted()){
+                    if (isInterrupted()) {
                         Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
                         output.close();
                         input.close();
@@ -242,7 +294,6 @@ public class DownloadService extends AbstractService {
                         return;
                     }
                 }
-
                 output.flush();
                 output.close();
                 input.close();
