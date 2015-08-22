@@ -54,15 +54,15 @@ public class DownloadService extends AbstractService {
             }
         } else if (!externalStorageWriteable) {
             showToast("Can't write on the external storage.");
-        } else if (title == null || ytUrl == null || mp3Url == null) {
-            showToast("There was an error downloading the music. Try again.");
-        } else {
+        } else if (title != null && ytUrl != null && mp3Url != null) {
             if (!isAlreadyBeingDownloaded(ytUrl)) {
-                musicDownloadingArrayList.add(new MusicDownloading(new Music(title, ytUrl), new Integer(currentNotificationId), mp3Url));
+                musicDownloadingArrayList.add(new MusicDownloading(new Music(title, ytUrl), currentNotificationId, mp3Url));
                 currentNotificationId++;
             } else {
                 showToast("The music is already being downloaded.");
             }
+        } else {
+            showToast("There was an error downloading the music. Try again.");
         }
         return START_NOT_STICKY;
     }
