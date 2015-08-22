@@ -8,6 +8,6 @@ $(document).ready(function(){
 
 function download() {
 	$(".download").hide();
-	$(".about").hide();
+	$("#about").hide();
 	$(".disclaimer").css("display", "block");
 }

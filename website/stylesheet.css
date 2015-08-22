@@ -28,7 +28,7 @@
 
             .about {
                 display: block;
-                margin-top: 50pt;
+                margin-top: 25pt;
                 margin-left: 15%;
                 width: 40%;
             }
@@ -36,7 +36,7 @@
             .download {
                 display: inline-block;
                 width: 250px; 
-                height: 87pt; 
+                height: 87px; 
                 background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
                 cursor: pointer;
             }
@@ -76,7 +76,7 @@
 
     .about {
         display: inline-block;
-        margin-top: 40pt;
+        margin-top: 25pt;
         margin-left: 10%;
         margin-right: 10%;
         width: 80%;
@@ -110,7 +110,7 @@
 @media (min-width: 1000pt) {
     .about {
         display: block;
-        margin-top: 40pt;
+        margin-top: 25pt;
         margin-left: 15%;
         width: 50%;
     }
