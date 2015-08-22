@@ -23,43 +23,13 @@ import java.util.ArrayList;
 
 public class DownloadService extends AbstractService {
 
-    private static int DOWNLOADSERVICE_NOTIFICATION_ID = 2;
+    private int currentNotificationId = 2;
 
-    private static final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
+    private final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
 
     private ArrayList<MusicDownloading> musicDownloadingArrayList = new ArrayList<MusicDownloading>();
-
     private CheckProgress checkProgress;
-
-    private String title;
-    private String ytUrl;
-    private String mp3Url;
-
     private boolean externalStorageWriteable = false;
-
-    private class MusicDownloading {
-        private Music music;
-        private int notificationId;
-        private DownloadMp3 downloadingThread;
-
-        public MusicDownloading(Music music, int notificationId, DownloadMp3 downloadingThread) {
-            this.music = music;
-            this.notificationId = notificationId;
-            this.downloadingThread = downloadingThread;
-        }
-
-        public DownloadMp3 getDownloadingThread() {
-            return downloadingThread;
-        }
-
-        public Music getMusic() {
-            return music;
-        }
-
-        public int getNotificationId() {
-            return notificationId;
-        }
-    }
 
     public DownloadService() {
         checkProgress = new CheckProgress();
@@ -70,16 +40,15 @@ public class DownloadService extends AbstractService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(ScumTubeApplication.TAG, "On start command download invoked: " + intent);
 
-        title = intent.getStringExtra("title");
-        ytUrl = intent.getStringExtra("ytUrl");
-        mp3Url = intent.getStringExtra("mp3Url");
+        final String title = intent.getStringExtra("title");
+        final String ytUrl = intent.getStringExtra("ytUrl");
+        final String mp3Url = intent.getStringExtra("mp3Url");
 
         updateExternalStorageState();
 
         if (intent.getAction() != null) {
             if(intent.getAction().equals(ACTION_EXIT)) {
                 if (intent.hasExtra("notificationId")) {
-                    Log.i(ScumTubeApplication.TAG, "Exiting: " + intent.getExtras().getInt("notificationId"));
                     exit(intent.getExtras().getInt("notificationId"));
                 }
             }
@@ -89,10 +58,8 @@ public class DownloadService extends AbstractService {
             showToast("There was an error downloading the music. Try again.");
         } else {
             if (!isAlreadyBeingDownloaded(ytUrl)) {
-                DownloadMp3 downloadThread = new DownloadMp3(title, mp3Url, DOWNLOADSERVICE_NOTIFICATION_ID, createDownloadNotification());
-                musicDownloadingArrayList.add(new MusicDownloading(new Music(title, ytUrl), DOWNLOADSERVICE_NOTIFICATION_ID, downloadThread));
-                downloadThread.start();
-                DOWNLOADSERVICE_NOTIFICATION_ID++;
+                musicDownloadingArrayList.add(new MusicDownloading(new Music(title, ytUrl), new Integer(currentNotificationId), mp3Url));
+                currentNotificationId++;
             } else {
                 showToast("The music is already being downloaded.");
             }
@@ -101,12 +68,12 @@ public class DownloadService extends AbstractService {
     }
 
     private void exit(int notificationId) {
+        Log.i(ScumTubeApplication.TAG, "Exiting: " + notificationId);
         for (MusicDownloading m : musicDownloadingArrayList) {
             if(m.getNotificationId() == notificationId){
+                Log.i(ScumTubeApplication.TAG, "Found exiting: " + m.getMusic().getTitle() + " :: " + " :: " + notificationId);
                 musicDownloadingArrayList.remove(m);
-                m.getDownloadingThread().interrupt();
-                final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                nm.cancel(m.getNotificationId());
+                m.exit();
                 return;
             }
 
@@ -133,54 +100,84 @@ public class DownloadService extends AbstractService {
         return false;
     }
 
+    private class MusicDownloading {
+        private final Music music;
+        private final int notificationId;
+        private final DownloadMp3 downloadingThread;
 
-    public Notification createDownloadNotification() {
-        Log.i(ScumTubeApplication.TAG, "Creating download progress notification: " + title);
+        public MusicDownloading(Music music, int notificationId, String mp3Url) {
+            this.music = music;
+            this.notificationId = notificationId;
+            downloadingThread = new DownloadMp3(music.getTitle(), mp3Url, notificationId, createDownloadNotification());
+            downloadingThread.start();
+        }
 
-        Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
-                DownloadService.class);
-        intent.putExtra("notificationId", DOWNLOADSERVICE_NOTIFICATION_ID);
-        PendingIntent exitPendingIntent = PendingIntent
-                .getService(DownloadService.this, 0, intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+        public Notification createDownloadNotification() {
+            Log.i(ScumTubeApplication.TAG, "Creating download progress notification: " + music.getTitle());
 
-        RemoteViews notificationView = createDownloadNotificationView();
-        notificationView
-                .setOnClickPendingIntent(R.id.notification_download_imageview_exit,
-                        exitPendingIntent);
+            Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
+                    DownloadService.class);
+            intent.putExtra("notificationId", notificationId);
+            PendingIntent exitPendingIntent = PendingIntent
+                    .getService(DownloadService.this, notificationId, intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(
-                DownloadService.this)
-                .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
-                .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
-                .setContent(notificationView);
+            RemoteViews notificationView = createDownloadNotificationView();
+            notificationView
+                    .setOnClickPendingIntent(R.id.notification_download_imageview_exit,
+                            exitPendingIntent);
 
-        Notification notification = builder.build();
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(
+                    DownloadService.this)
+                    .setSmallIcon(R.drawable.ic_loading).setContentTitle(ScumTubeApplication.APP_NAME)
+                    .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setContent(notificationView);
 
-        final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(DOWNLOADSERVICE_NOTIFICATION_ID, notification);
+            Notification notification = builder.build();
 
-        return notification;
-    }
+            final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.notify(notificationId, notification);
 
-    public RemoteViews createDownloadNotificationView() {
-        RemoteViews downloadNotificationView = new RemoteViews(getPackageName(), R.layout.notification_download);
-        downloadNotificationView.setTextViewText(R.id.notification_download_textview, title);
-        return downloadNotificationView;
-    }
+            return notification;
+        }
 
-    public void updateNotification(Notification notification, int notificationId, int progress) {
-        notification.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
+        public RemoteViews createDownloadNotificationView() {
+            RemoteViews downloadNotificationView = new RemoteViews(getPackageName(), R.layout.notification_download);
+            downloadNotificationView.setTextViewText(R.id.notification_download_textview, music.getTitle());
+            return downloadNotificationView;
+        }
 
-        final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(notificationId, notification);
+        public void updateNotification(Notification notification, int notificationId, int progress) {
+            notification.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
+
+            final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.notify(notificationId, notification);
+        }
+
+        public void exit() {
+            downloadingThread.interrupt();
+            final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            nm.cancel(notificationId);
+        }
+
+        public DownloadMp3 getDownloadingThread() {
+            return downloadingThread;
+        }
+
+        public Music getMusic() {
+            return music;
+        }
+
+        public int getNotificationId() {
+            return notificationId;
+        }
     }
 
     class DownloadMp3 extends Thread {
-        private String title;
-        private String mp3Url;
-        private int notificationId;
-        private Notification notification;
+        private final String title;
+        private final String mp3Url;
+        private final int notificationId;
+        private final Notification notification;
         private int progress;
 
         public DownloadMp3(String title, String mp3Url, int notificationId, Notification notification) {
@@ -263,7 +260,7 @@ public class DownloadService extends AbstractService {
             while (!isInterrupted()) {
                 for (MusicDownloading m : musicDownloadingArrayList) {
                     if (!isInterrupted()) {
-                        updateNotification(m.getDownloadingThread().getNotification(),
+                        m.updateNotification(m.getDownloadingThread().getNotification(),
                                 m.getDownloadingThread().getNotificationId(),
                                 m.getDownloadingThread().getProgress());
                     }
