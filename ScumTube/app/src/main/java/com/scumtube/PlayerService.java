@@ -1,11 +1,9 @@
 package com.scumtube;
 
-import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -16,12 +14,10 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import org.apache.http.HttpEntity;
@@ -558,6 +554,7 @@ public class PlayerService extends AbstractService {
                                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
                                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(browserIntent);
+                                exit();
                                 return;
                             }
                         }
