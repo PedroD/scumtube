@@ -26,6 +26,8 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public final class ServicesProvider {
 
+	private static final String CURRENT_VERSION = "0.7";
+
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
 	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
 	private static final int MAX_RETRIES = 3;
@@ -321,8 +323,7 @@ public final class ServicesProvider {
 		private void download() {
 			while (retries < MAX_RETRIES) {
 				/*
-				 * Semaphore released only when the download finishes (with
-				 * error or not).
+				 * Semaphore released only when the download finishes (with error or not).
 				 */
 				final Semaphore sem = new Semaphore(0);
 				final Thread t = new DownloadThread(sem);
@@ -415,6 +416,7 @@ public final class ServicesProvider {
 		public String doGet() throws Exception {
 			configureRestForm(this);
 			JSONObject response = new JSONObject();
+			response.put("version", CURRENT_VERSION);
 			final String videoId = getRequest().getAttributes().get("video_id").toString();
 			if (videoId == null || videoId.equals("")) {
 				response.put("error", "Invalid video id!");

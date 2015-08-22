@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -15,6 +16,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.app.AlertDialog;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -31,6 +33,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.MessageDigest;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
@@ -540,6 +543,29 @@ public class PlayerService extends AbstractService {
                         }
 
                         jsonObject = new JSONObject(stringBuilder.toString());
+                        /*
+                         * Validate app version.
+                         */
+                        if (jsonObject.has("version")) {
+                            final String v = jsonObject.getString("version");
+                            byte[] bytesOfMessage = v.getBytes("UTF-8");
+                            MessageDigest md = MessageDigest.getInstance("MD5");
+                            final String d = new String(md.digest(bytesOfMessage), "UTF-8");
+                            if (!ScumTubeApplication._T.equals(d)) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                                builder.setMessage("A new version of ScumTube was released! You need to update.")
+                                        .setCancelable(false)
+                                        .setPositiveButton("Update", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                                                startActivity(browserIntent);
+                                            }
+                                        });
+                                AlertDialog alert = builder.create();
+                                alert.show();
+                                return;
+                            }
+                        }
                         if (jsonObject.has("ready")) {
                             sStreamMp3Url = jsonObject.getString("url");
                             sStreamCoverUrl = jsonObject.getString("cover");
