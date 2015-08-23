@@ -546,15 +546,14 @@ public class PlayerService extends AbstractService {
                          */
                         if (jsonObject.has("version")) {
                             final String v = jsonObject.getString("version");
-                            byte[] bytesOfMessage = v.getBytes("UTF-8");
-                            MessageDigest md = MessageDigest.getInstance("MD5");
-                            final String d = new String(md.digest(bytesOfMessage), "UTF-8");
+                            final String d = ScumTubeApplication.md5(v);
+                            Log.i(ScumTubeApplication.TAG, "is " + d + " == " + ScumTubeApplication._T);
                             if (!ScumTubeApplication._T.equals(d)) {
                                 showToast("A new version of ScumTube was released! You need to update.");
                                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
                                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(browserIntent);
-                                exit();
+                                PlayerService.this.exit();
                                 return;
                             }
                         }
@@ -575,6 +574,7 @@ public class PlayerService extends AbstractService {
                 }
                 if (this.isInterrupted()) {
                     Log.w(ScumTubeApplication.TAG, "Download task interrupted");
+                    return;
                 }
             } catch (InterruptedException e) {
                 Log.w(ScumTubeApplication.TAG, "Download task interrupted");
