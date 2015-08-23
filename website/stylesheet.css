@@ -1,5 +1,12 @@
 @media (max-width: 1000px) {
 
+    .tutorial_img {
+        height: auto;
+        width: auto;
+        max-width: 500px;
+        max-height: 800px;
+    }
+
     .smartphone {
         display: none;
     }
@@ -85,6 +92,13 @@
 }
 
 @media (min-width: 1001px) {
+
+    .tutorial_img {
+        height: auto;
+        width: auto;
+        max-width: 300px;
+        max-height: 800px;
+    }
 
     .smartphone {
         width: 300pt;
@@ -319,9 +333,3 @@ body {
     background: transparent url("img/slider/6.png") no-repeat scroll 0 0 / contain;
 }
 
-.tutorial_img {
-    height: auto; 
-    width: auto; 
-    max-width: 500px;
-    max-height: 800px;
-}
