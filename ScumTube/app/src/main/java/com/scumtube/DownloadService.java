@@ -68,7 +68,7 @@ public class DownloadService extends AbstractService {
                             openMusicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(openMusicIntent);
                             exit(notificationId);
-                        } else{
+                        } else {
                             showToast("The file doesn't exist.");
                         }
                     } else {
@@ -228,7 +228,8 @@ public class DownloadService extends AbstractService {
         public boolean isDone() {
             return isDone;
         }
-        public void setIsDone(boolean isDone){
+
+        public void setIsDone(boolean isDone) {
             this.isDone = isDone;
         }
     }
@@ -277,12 +278,25 @@ public class DownloadService extends AbstractService {
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                String directoryPath =  Environment.getExternalStorageDirectory() + "/ScumTube/";
+                String directoryPath = Environment.getExternalStorageDirectory() + "/ScumTube/";
                 File directory = new File(directoryPath);
-                if(!directory.exists()){
+                if (!directory.exists()) {
                     directory.mkdir();
                 }
                 String filePath = directoryPath + title + ".mp3";
+
+                File file;
+                int i = 1;
+                while (true) {
+                    file = new File(filePath);
+                    if(!file.exists()){
+                        break;
+                    }
+                    Log.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
+                    filePath = directoryPath + title + "(" + i + ")" + ".mp3";
+                    i++;
+                }
+
                 OutputStream output = new FileOutputStream(filePath);
 
                 if (isInterrupted()) {
@@ -328,7 +342,7 @@ public class DownloadService extends AbstractService {
                                 m.getDownloadingThread().getNotificationId(),
                                 m.getDownloadingThread().getProgress());
                     }
-                    if(m.getDownloadingThread().getProgress() == 100){
+                    if (m.getDownloadingThread().getProgress() == 100) {
                         m.setIsDone(true);
                     }
                 }
