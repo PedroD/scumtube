@@ -12,7 +12,7 @@
 <body>
         <div class="header">
             <div class="header-pattern">
-                <div class="logo"></div>
+                <a href=""><div class="logo"></div></a>
             </div>
         </div>
         <div class="content">
@@ -51,11 +51,11 @@
                     <div class="about-text">
                         <b>ScumTube</b> has <b>full integration</b> with the <b>YouTube</b> Android app.
                     </div>
-                </div>
-                <div class="button-wrapper">
-                    <span class="download" onclick="download()"></span>
-                </div>            
-            </div>        
+                </div>         
+            </div>
+            <div class="button-wrapper">
+                <span class="download" onclick="download()"></span>
+            </div>           
             <div class="disclaimer">
                 <div class="disclaimer-text">
                 <h1>Disclaimer</h1>
@@ -74,20 +74,19 @@
                 </div>                
             </div>
 
-            <div class="about" style="margin-left: auto !important; margin-right: auto !important; width: 100% !important; text-align: center !important;">  
-                <div class="about-row">
-                    <script type="text/javascript">
-                      ( function() {
-                        if (window.CHITIKA === undefined) { window.CHITIKA = { 'units' : [] }; };
-                        var unit = {"calltype":"async[2]","publisher":"scumtube","width":550,"height":120,"sid":"Chitika Default"};
-                        var placement_id = window.CHITIKA.units.length;
-                        window.CHITIKA.units.push(unit);
-                        document.write('<div id="chitikaAdBlock-' + placement_id + '"></div>');
-                    }());
-                    </script>
-                    <script type="text/javascript" src="//cdn.chitika.net/getads.js" async></script>
-                </div>        
+            <div style="text-align:center;margin-top:20pt;">
+                <script type="text/javascript">
+                  ( function() {
+                    if (window.CHITIKA === undefined) { window.CHITIKA = { 'units' : [] }; };
+                    var unit = {"calltype":"async[2]","publisher":"scumtube","width":550,"height":120,"sid":"Chitika Default"};
+                    var placement_id = window.CHITIKA.units.length;
+                    window.CHITIKA.units.push(unit);
+                    document.write('<div id="chitikaAdBlock-' + placement_id + '"></div>');
+                }());
+                </script>
+                <script type="text/javascript" src="//cdn.chitika.net/getads.js" async></script>
             </div>
+
 
         </div>
     <script type="text/javascript" src="js/jquery-1.11.3.min.js"></script> 
