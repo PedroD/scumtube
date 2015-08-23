@@ -277,3 +277,10 @@ body {
     height: 295pt;
     background: transparent url("img/slider/6.png") no-repeat scroll 0 0 / contain;
 }
+
+.unknown_src_img {
+    height: auto; 
+    width: auto; 
+    max-width: 200px; 
+    max-height: 300px;
+}
