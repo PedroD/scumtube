@@ -1,63 +1,9 @@
-@media (min-width: 700pt) {
-            .smartphone {
-                width: 300pt;
-                height: 456pt;
-                background: url("img/smartphone.png") no-repeat scroll 0 0 / contain;
-                position: absolute;
-                z-index: 1;
-                right: 30pt;
-                top: 30pt;
-            }
+@media (max-width: 1200px) {
+    body {
+        font-size: 200%;
+    }
 
-            .smartphone-screen {
-                background: black;
-                margin-top: 64pt;
-                margin-left: 33pt;
-                width: 172pt;
-                height: 295pt;
-            }
 
-            .logo {
-                display: inline-block;
-                margin-top: 20pt;
-                margin-left: 15%;   
-                width: 300px;
-                height: 100px;
-                background: transparent url("img/logo.png") no-repeat scroll 0 0 / contain;
-            }
-
-            .about {
-                display: block;
-                margin-top: 25pt;
-                margin-left: 15%;
-                width: 40%;
-            }
-
-            .download {
-                display: inline-block;
-                width: 250px; 
-                height: 87px; 
-                background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
-                cursor: pointer;
-            }
-
-            .button-wrapper {
-                margin-top: 30pt;
-                text-align: center;
-            }
-
-            .disclaimer-text {
-                display: block;
-                text-align: justify;
-                max-height: 300pt;
-                margin-top: 50pt;
-                margin-left: 15%;
-                width: 40%; 
-                overflow-y: scroll;
-            }
-        }
-
-@media (max-width: 700pt) {
     .smartphone {
         display: none;
     }
@@ -67,26 +13,40 @@
         position: relative;
         top: 50%;
         left: 50%;
-        margin-top: -50px;
-        margin-left: -150px;        
-        width: 300px;
-        height: 100px;
+        margin-left: -300px;        
+        width: 600px;
+        height: 200px;
         background: transparent url("img/logo.png") no-repeat scroll 0 0 / contain;
     }
 
     .about {
         display: inline-block;
-        margin-top: 25pt;
+        margin-top: 100pt;
         margin-left: 10%;
         margin-right: 10%;
         width: 80%;
         height: 100pt;
     }
 
+    .about-icon {
+        margin-left: 29px;
+        margin-top: 29px;
+        width: 100px;
+        height: 100px;
+    }
+
+    .about-circle {
+        border: 1px solid lightgrey;
+        border-radius: 50%;
+        width: 120pt;
+        height: 120pt; 
+        background: rgba(1, 1, 1, 0.05);
+    }
+
     .download {
         display: inline-block;
-        width: 250px; 
-        height: 87px; 
+        width: 500px; 
+        height: 174px; 
         background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
         cursor: pointer;
     }
@@ -98,6 +58,7 @@
 
     .disclaimer-text {
         display: inline-block;
+        font-size: 50%;
         text-align: justify;
         margin-top: 50pt;
         margin-left: 10%;
@@ -105,9 +66,88 @@
         width: 80%;
         overflow-y: scroll;
     }
+
+    .disclaimer-text a {
+        font-size: 200%;
+    }
 }
 
-@media (min-width: 1000pt) {
+@media (min-width: 1200px) {
+
+    .smartphone {
+        width: 300pt;
+        height: 456pt;
+        background: url("img/smartphone.png") no-repeat scroll 0 0 / contain;
+        position: absolute;
+        z-index: 1;
+        right: 30pt;
+        top: 30pt;
+    }
+
+    .smartphone-screen {
+        background: black;
+        margin-top: 64pt;
+        margin-left: 33pt;
+        width: 172pt;
+        height: 295pt;
+    }
+
+    .logo {
+        display: inline-block;
+        margin-top: 20pt;
+        margin-bottom: 20pt;
+        margin-left: 15%;   
+        width: 300px;
+        height: 100px;
+        background: transparent url("img/logo.png") no-repeat scroll 0 0 / contain;
+    }
+
+    .about {
+        display: block;
+        margin-top: 25pt;
+        margin-left: 15%;
+        width: 40%;
+    }
+    .about-icon {
+        margin-left: 22px;
+        margin-top: 22px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .about-circle {
+        border: 1px solid lightgrey;
+        border-radius: 50%;
+        width: 70pt;
+        height: 70pt; 
+        background: rgba(1, 1, 1, 0.05);
+    }
+
+    .download {
+        display: inline-block;
+        width: 250px; 
+        height: 87px; 
+        background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
+        cursor: pointer;
+    }
+
+    .button-wrapper {
+        margin-top: 30pt;
+        text-align: center;
+    }
+
+    .disclaimer-text {
+        display: block;
+        text-align: justify;
+        max-height: 300pt;
+        margin-top: 50pt;
+        margin-left: 15%;
+        width: 40%; 
+        overflow-y: scroll;
+    }
+}
+
+@media (min-width: 1200px) {
     .about {
         display: block;
         margin-top: 25pt;
@@ -135,7 +175,6 @@ body {
 .header {
     display: inline-block;
     width: 100%; 
-    height: 120pt;
     background: #800818; 
     border-bottom: 2px solid #5F0413;
     background: -webkit-linear-gradient(-90deg, #E60000, #610000); /* For Safari 5.1 to 6.0 */
@@ -177,21 +216,6 @@ body {
 .about-circle-container {
     display: table-cell;
     vertical-align: middle;
-}
-
-.about-circle {
-    border: 1px solid lightgrey;
-    border-radius: 50%;
-    width: 70pt;
-    height: 70pt; 
-    background: rgba(1, 1, 1, 0.05);
-}
-
-.about-icon {
-    margin-left: 22px;
-    margin-top: 22px;
-    width: 50px;
-    height: 50px;
 }
 
 .about-icon-boombox {
