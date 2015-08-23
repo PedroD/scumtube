@@ -4,15 +4,22 @@
     <string name="title_activity_notification_return_slot">NotificationReturnSlot</string>
     <string name="loading">Your music is loading. Please wait.</string>
     <string name="loading_advice">Please don\'t turn off your internet connection.</string>
-    <string name="title_activity_history">HistoryActivity</string>
     <string name="app_name">ScumTube</string>
-    <string name="history_activity">Music History</string>
-    <string name="history_empty">The history is empty.</string>
     <string name="intent">Background Play</string>
     <string name="banner_ad_unit_id">ca-app-pub-4389360825353387/3666187355</string>
+
+    <string name="history_activity">Music History</string>
+    <string name="history_empty">The history is empty.</string>
     <string name="history_menu_delete">Delete</string>
+    <string name="history_menu_delete_all">Delete all</string>
+    <string name="history_menu_delete_all_message">This will make you lose all the history.</string>
+
+    <string name="cancel">Cancel</string>
+
+
     <string name="download_done">Download complete. Click to open the music.</string>
     <string name="download_connecting">Establishing connection...</string>
+
 
 
 </resources>

@@ -52,6 +52,10 @@ public class MusicList {
         }
     }
 
+    public static void removeAll(){
+        musicArrayList.clear();
+    }
+
     public static void saveMusicList(SharedPreferences sharedPreferences) {
         SharedPreferences preferences = sharedPreferences;
         SharedPreferences.Editor editor = preferences.edit();

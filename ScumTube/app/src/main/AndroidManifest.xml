@@ -62,7 +62,7 @@
             android:excludeFromRecents="true"
             android:label="@string/history_activity"
             android:launchMode="singleTask"
-            android:theme="@android:style/Theme.Holo" >
+            android:theme="@android:style/Theme.Holo.Light.DarkActionBar" >
             <intent-filter
                 android:icon="@drawable/backyt"
                 android:label="@string/history_activity" >

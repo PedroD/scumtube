@@ -1,10 +1,15 @@
 package com.scumtube;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,11 +35,45 @@ public class HistoryActivity extends AbstractActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_history);
 
         AdView mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").addTestDevice("58B2FFDEEAA2B8B16A6A3969DCEB6570").build(); //TODO remove addTestDevice for production
         mAdView.loadAd(adRequest);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_history, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.history_menu_delete_all:
+                AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(this, android.R.style.Theme_Holo_Dialog));
+                builder.setMessage(R.string.history_menu_delete_all_message)
+                        .setTitle(R.string.history_menu_delete_all)
+                        .setPositiveButton(R.string.history_menu_delete_all, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                MusicList.removeAll();
+                                saveMusicList();
+                                getView();
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                            }
+                        }).create().show();
+                ;
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -76,7 +115,7 @@ public class HistoryActivity extends AbstractActivity {
                     @Override
                     public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
                         PopupMenu popup = new PopupMenu(HistoryActivity.this, view.findViewById(R.id.history_item_title));
-                        popup.getMenuInflater().inflate(R.menu.menu_history, popup.getMenu());
+                        popup.getMenuInflater().inflate(R.menu.menu_history_item, popup.getMenu());
                         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                             public boolean onMenuItemClick(MenuItem item) {
                                 int id = item.getItemId();
@@ -84,7 +123,7 @@ public class HistoryActivity extends AbstractActivity {
                                     case R.id.history_menu_delete:
                                         Music musicItem = (Music) parent.getItemAtPosition(position);
                                         MusicList.remove(musicItem);
-                                        MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
+                                        saveMusicList();
                                         getView();
                                 }
                                 return true;
@@ -97,6 +136,10 @@ public class HistoryActivity extends AbstractActivity {
         );
 
         hasView = true;
+    }
+
+    public void saveMusicList() {
+        MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
     }
 
     public void createAdapter() {
