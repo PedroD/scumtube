@@ -12,9 +12,9 @@
     }
 
     .donation_wrapper {
-        background-color:black;
-        color:white;
-        font-size:140%;
+        background-color: black;
+        color: white;
+        font-size: 140%;
     }
 
     .logo {
@@ -22,7 +22,7 @@
         position: relative;
         top: 50%;
         left: 50%;
-        margin-left: -300px;        
+        margin-left: -300px;
         width: 600px;
         height: 200px;
         background: transparent url("img/logo.png") no-repeat scroll 0 0 / contain;
@@ -63,21 +63,20 @@
         border: 1px solid lightgrey;
         border-radius: 50%;
         width: 120pt;
-        height: 120pt; 
+        height: 120pt;
         background: rgba(1, 1, 1, 0.05);
     }
 
     .download {
         display: inline-block;
-        width: 500px; 
-        height: 174px; 
+        width: 500px;
+        height: 174px;
         background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
         cursor: pointer;
     }
 
     .disclaimer-text {
         display: inline-block;
-        font-size: 50%;
         text-align: justify;
         margin-top: 50pt;
         margin-left: 10%;
@@ -119,16 +118,16 @@
     }
 
     .donation_wrapper {
-        background-color:black;
-        color:white;
-        font-size:100%;
+        background-color: black;
+        color: white;
+        font-size: 100%;
     }
 
     .logo {
         display: inline-block;
         margin-top: 20pt;
         margin-bottom: 20pt;
-        margin-left: 15%;   
+        margin-left: 15%;
         width: 300px;
         height: 100px;
         background: transparent url("img/logo.png") no-repeat scroll 0 0 / contain;
@@ -159,14 +158,14 @@
         border: 1px solid lightgrey;
         border-radius: 50%;
         width: 70pt;
-        height: 70pt; 
+        height: 70pt;
         background: rgba(1, 1, 1, 0.05);
     }
 
     .download {
         display: inline-block;
-        width: 250px; 
-        height: 87px; 
+        width: 250px;
+        height: 87px;
         background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
         cursor: pointer;
     }
@@ -177,7 +176,7 @@
         max-height: 300pt;
         margin-top: 50pt;
         margin-left: 15%;
-        width: 40%; 
+        width: 40%;
         overflow-y: auto;
     }
 
@@ -207,19 +206,19 @@
 }
 
 body {
-    padding: 0; 
-    margin: 0; 
+    padding: 0;
+    margin: 0;
     height: 1px;
-    min-height: 100vh; 
+    min-height: 100vh;
     max-width: 100vw;
     background: url("img/content_pattern.png");
-    font-family: arial;
+    font-family: Arial, serif;
 }
 
 .header {
     display: inline-block;
-    width: 100%; 
-    background: #800818; 
+    width: 100%;
+    background: #800818;
     border-bottom: 2px solid #5F0413;
     background: -webkit-linear-gradient(-90deg, #E60000, #610000); /* For Safari 5.1 to 6.0 */
     background: -o-linear-gradient(-90deg, #E60000, #610000); /* For Opera 11.1 to 12.0 */
@@ -231,9 +230,9 @@ body {
     display: inline-block;
     margin-top: 10px;
     margin-bottom: 10px;
-    margin-left:10%;
-    margin-right:10%;
-    padding-top:7px;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding-top: 2px;
 }
 
 .donation_wrapper span, .donation_wrapper form {
@@ -254,7 +253,7 @@ body {
 }
 
 .disclaimer a {
-    display: inline-block;   
+    display: inline-block;
 }
 
 .header-pattern {
