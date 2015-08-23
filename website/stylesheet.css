@@ -146,7 +146,7 @@
         margin-top: 50pt;
         margin-left: 15%;
         width: 40%; 
-        overflow-y: scroll;
+        overflow-y: auto;
     }
 }
 
