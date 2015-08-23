@@ -174,8 +174,9 @@
         display: block;
         text-align: justify;
         max-height: 300pt;
-        margin-top: 50pt;
+        margin-top: 20pt;
         margin-left: 15%;
+        margin-bottom: 50pt;
         width: 40%;
         overflow-y: auto;
     }
@@ -199,8 +200,9 @@
 
     .disclaimer-text {
         display: block;
-        margin-top: 40pt;
+        margin-top: 20pt;
         margin-left: 15%;
+        margin-bottom: 50pt;
         width: 50%;
     }
 }
