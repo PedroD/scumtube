@@ -138,6 +138,7 @@ public class DownloadService extends AbstractService {
         private final Music music;
         private final int notificationId;
         private final DownloadMp3 downloadingThread;
+        private boolean isDone = false;
 
         public MusicDownloading(Music music, int notificationId, String mp3Url) {
             this.music = music;
@@ -223,6 +224,13 @@ public class DownloadService extends AbstractService {
         public int getNotificationId() {
             return notificationId;
         }
+
+        public boolean isDone() {
+            return isDone;
+        }
+        public void setIsDone(boolean isDone){
+            this.isDone = isDone;
+        }
     }
 
     class DownloadMp3 extends Thread {
@@ -269,7 +277,12 @@ public class DownloadService extends AbstractService {
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                String filePath = Environment.getExternalStorageDirectory() + "/ScumTube/" + title + ".mp3";
+                String directoryPath =  Environment.getExternalStorageDirectory() + "/ScumTube/";
+                File directory = new File(directoryPath);
+                if(!directory.exists()){
+                    directory.mkdir();
+                }
+                String filePath = directoryPath + title + ".mp3";
                 OutputStream output = new FileOutputStream(filePath);
 
                 if (isInterrupted()) {
@@ -310,10 +323,13 @@ public class DownloadService extends AbstractService {
         public void run() {
             while (!isInterrupted()) {
                 for (MusicDownloading m : musicDownloadingArrayList) {
-                    if (!isInterrupted()) {
+                    if (!isInterrupted() && !m.isDone()) {
                         m.updateNotification(m.getDownloadingThread().getNotification(),
                                 m.getDownloadingThread().getNotificationId(),
                                 m.getDownloadingThread().getProgress());
+                    }
+                    if(m.getDownloadingThread().getProgress() == 100){
+                        m.setIsDone(true);
                     }
                 }
                 try {
