@@ -1,4 +1,4 @@
-@media (max-width: 1200px) {
+@media (max-width: 1000px) {
     body {
         font-size: 200%;
     }
@@ -64,15 +64,14 @@
         margin-left: 10%;
         margin-right: 10%;
         width: 80%;
-        overflow-y: scroll;
     }
 
     .disclaimer-text a {
-        font-size: 200%;
+        font-size: 300%;
     }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1001px) {
 
     .smartphone {
         width: 300pt;
