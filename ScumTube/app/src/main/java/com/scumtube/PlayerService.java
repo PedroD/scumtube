@@ -31,7 +31,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.MessageDigest;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
@@ -547,7 +546,6 @@ public class PlayerService extends AbstractService {
                         if (jsonObject.has("version")) {
                             final String v = jsonObject.getString("version");
                             final String d = ScumTubeApplication.md5(v);
-                            Log.i(ScumTubeApplication.TAG, "is " + d + " == " + ScumTubeApplication._T);
                             if (!ScumTubeApplication._T.equals(d)) {
                                 showToast("A new version of ScumTube was released! You need to update.");
                                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));

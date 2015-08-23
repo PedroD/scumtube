@@ -58,18 +58,20 @@ public class DownloadService extends AbstractService {
                     int notificationId = intent.getExtras().getInt("notificationId");
                     final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
                     if (m != null) {
-                        final File file = new File(Environment.getExternalStorageDirectory() + "/ScumTube/" + m.getMusic().getTitle() + ".mp3");
-                        if (file.exists()) {
-                            final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-                            getApplicationContext().sendBroadcast(it);
-                            final Intent openMusicIntent = new Intent();
-                            openMusicIntent.setAction(android.content.Intent.ACTION_VIEW);
-                            openMusicIntent.setDataAndType(Uri.fromFile(file), "audio/*");
-                            openMusicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(openMusicIntent);
-                            exit(notificationId);
-                        } else {
-                            showToast("The file doesn't exist.");
+                        if (m.getFilePath() != null) {
+                            final File file = new File(m.getFilePath());
+                            if (file.exists()) {
+                                final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+                                getApplicationContext().sendBroadcast(it);
+                                final Intent openMusicIntent = new Intent();
+                                openMusicIntent.setAction(android.content.Intent.ACTION_VIEW);
+                                openMusicIntent.setDataAndType(Uri.fromFile(file), "audio/*");
+                                openMusicIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(openMusicIntent);
+                                exit(notificationId);
+                            } else {
+                                showToast("The file doesn't exist.");
+                            }
                         }
                     } else {
                         showToast("There was an error opening the file.");
@@ -139,6 +141,7 @@ public class DownloadService extends AbstractService {
         private final int notificationId;
         private final DownloadMp3 downloadingThread;
         private boolean isDone = false;
+        private String filePath;
 
         public MusicDownloading(Music music, int notificationId, String mp3Url) {
             this.music = music;
@@ -232,6 +235,14 @@ public class DownloadService extends AbstractService {
         public void setIsDone(boolean isDone) {
             this.isDone = isDone;
         }
+
+        public String getFilePath() {
+            return filePath;
+        }
+
+        public void setFilePath(String filePath) {
+            this.filePath = filePath;
+        }
     }
 
     class DownloadMp3 extends Thread {
@@ -289,7 +300,7 @@ public class DownloadService extends AbstractService {
                 int i = 1;
                 while (true) {
                     file = new File(filePath);
-                    if(!file.exists()){
+                    if (!file.exists()) {
                         break;
                     }
                     Log.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
@@ -324,6 +335,8 @@ public class DownloadService extends AbstractService {
                 output.flush();
                 output.close();
                 input.close();
+                MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
+                m.setFilePath(filePath);
                 Log.i(ScumTubeApplication.TAG, "Finished the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
             } catch (IOException e) {
                 e.printStackTrace();
