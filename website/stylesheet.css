@@ -21,11 +21,17 @@
 
     .about {
         display: inline-block;
-        margin-top: 100pt;
-        margin-left: 10%;
+        margin-top: 50pt;
+        margin-left: 9%;
         margin-right: 10%;
         width: 80%;
-        height: 100pt;
+    }
+
+    .about-row {
+        display: table;
+        width: 100%;
+        min-height: 70pt;
+        margin-bottom: 30pt;
     }
 
     .about-icon {
@@ -49,11 +55,6 @@
         height: 174px; 
         background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
         cursor: pointer;
-    }
-
-    .button-wrapper {
-        margin-top: 50pt;
-        text-align: center;
     }
 
     .disclaimer-text {
@@ -107,6 +108,14 @@
         margin-left: 15%;
         width: 40%;
     }
+
+    .about-row {
+        display: table;
+        width: 100%;
+        min-height: 70pt;
+        margin-bottom: 10pt;
+    }
+
     .about-icon {
         margin-left: 22px;
         margin-top: 22px;
@@ -128,11 +137,6 @@
         height: 87px; 
         background: transparent url("img/download.png") no-repeat scroll 0 0 / contain;
         cursor: pointer;
-    }
-
-    .button-wrapper {
-        margin-top: 30pt;
-        text-align: center;
     }
 
     .disclaimer-text {
@@ -205,13 +209,6 @@ body {
     background: url("img/header_pattern2.png");
 }
 
-.about-row {
-    display: table;
-    width: 100%;
-    min-height: 70pt;
-    margin-bottom: 15pt;
-}
-
 .about-circle-container {
     display: table-cell;
     vertical-align: middle;
@@ -241,6 +238,10 @@ body {
     vertical-align: middle;
 }
 
+.button-wrapper {
+    margin-top: 15pt;
+    text-align: center;
+}
 
 #screen-1 {
     width: 172pt;
