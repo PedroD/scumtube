@@ -16,8 +16,8 @@ import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
-import youtube.to.mp3.converters.TheYouMp3Task;
 import youtube.to.mp3.converters.Youtube2Mp3Task;
+import youtube.to.mp3.converters.TheYouMp3Task;
 
 public final class ServicesProvider {
 
@@ -138,8 +138,8 @@ public final class ServicesProvider {
 				java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
 
 				final Semaphore sem = new Semaphore(0);
-				final TheYouMp3Task task1 = new TheYouMp3Task(VideoRequest.this);
-				final Youtube2Mp3Task task2 = new Youtube2Mp3Task(VideoRequest.this);
+				final Youtube2Mp3Task task1 = new Youtube2Mp3Task(VideoRequest.this);
+				final TheYouMp3Task task2 = new TheYouMp3Task(VideoRequest.this);
 				final ServerFetcher t1 = new ServerFetcher(sem, task1);
 				final ServerFetcher t2 = new ServerFetcher(sem, task2);
 
@@ -282,10 +282,12 @@ public final class ServicesProvider {
 
 		@SuppressWarnings("deprecation")
 		private void download() {
+			new Logger().log(Logger.LOG_INFO, "Starting download of " + videoId);
 			while (retries < MAX_RETRIES) {
+				if (retries > 0)
+					new Logger().log(Logger.LOG_WARNING, "Retrying again... (" + retries + ")");
 				/*
-				 * Semaphore released only when the download finishes (with
-				 * error or not).
+				 * Semaphore released only when the download finishes (with error or not).
 				 */
 				final Semaphore sem = new Semaphore(0);
 				final Thread t = new DownloadThread(sem);
@@ -299,6 +301,7 @@ public final class ServicesProvider {
 				if (timedOut) {
 					t.interrupt();
 					t.stop();
+					new Logger().log(Logger.LOG_WARNING, "Download of " + videoId + " timed out!");
 					if (retries >= MAX_RETRIES) {
 						abortRequest("Could not download " + videoId + " because it timed out.");
 					} else {
@@ -308,6 +311,7 @@ public final class ServicesProvider {
 					break;
 				}
 			}
+			new Logger().log(Logger.LOG_INFO, "Download of " + videoId + " completed!");
 			moveToCompletedRequestsList(this);
 		}
 
@@ -357,6 +361,7 @@ public final class ServicesProvider {
 		}
 
 		public void setMp3Url(String mp3Url) {
+			new Logger().log(Logger.LOG_INFO, "(" + videoId + ") MP3 URL: " + mp3Url);
 			this.mp3Url = mp3Url;
 		}
 
