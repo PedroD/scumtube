@@ -274,7 +274,8 @@ public class DownloadService extends AbstractService {
         @Override
         public void run() {
             try {
-                Log.i(ScumTubeApplication.TAG, "Started the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
+                String titleEscaped = addEscapeChars(title);
+                Log.i(ScumTubeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                 URL url = new URL(mp3Url);
                 URLConnection connection = url.openConnection();
                 connection.connect();
@@ -282,10 +283,9 @@ public class DownloadService extends AbstractService {
                 int fileLength = connection.getContentLength();
 
                 if (isInterrupted()) {
-                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
+                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     return;
                 }
-                Log.i(ScumTubeApplication.TAG, "Output directory: " + Environment.getExternalStorageDirectory() + "/ScumTube/" + title + ".mp3");
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
@@ -294,7 +294,11 @@ public class DownloadService extends AbstractService {
                 if (!directory.exists()) {
                     directory.mkdir();
                 }
-                String filePath = directoryPath + title + ".mp3";
+
+                String filePath = directoryPath + titleEscaped + ".mp3";
+
+                Log.i(ScumTubeApplication.TAG, "Output directory: " + filePath);
+
 
                 File file;
                 int i = 1;
@@ -304,14 +308,14 @@ public class DownloadService extends AbstractService {
                         break;
                     }
                     Log.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
-                    filePath = directoryPath + title + "(" + i + ")" + ".mp3";
+                    filePath = directoryPath + titleEscaped + "(" + i + ")" + ".mp3";
                     i++;
                 }
 
                 OutputStream output = new FileOutputStream(filePath);
 
                 if (isInterrupted()) {
-                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
+                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     output.close();
                     input.close();
                     return;
@@ -325,7 +329,7 @@ public class DownloadService extends AbstractService {
                     progress = (int) (total * 100 / fileLength);
                     output.write(data, 0, count);
                     if (isInterrupted()) {
-                        Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
+                        Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                         output.close();
                         input.close();
                         new File(filePath).delete();
@@ -337,10 +341,23 @@ public class DownloadService extends AbstractService {
                 input.close();
                 MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
                 m.setFilePath(filePath);
-                Log.i(ScumTubeApplication.TAG, "Finished the download thread of: " + title + " :: " + mp3Url + " :: " + notificationId);
+                Log.i(ScumTubeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+        private String addEscapeChars(String s){
+            String result = s.replaceAll("\\t", "");
+            result = result.replaceAll("\\b", "");
+            result = result.replaceAll("\\n", "");
+            result = result.replaceAll("\\r", "");
+            result = result.replaceAll("\\f", "");
+            result = result.replaceAll("'", "");
+            result = result.replaceAll("\"", "");
+            result = result.replaceAll("\\\\", "");
+            result = result.replaceAll("/", "");
+            return result;
         }
     }
 
