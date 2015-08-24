@@ -16,24 +16,63 @@ import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+import youtube.to.mp3.converters.TheYouMp3Task;
+import youtube.to.mp3.converters.Youtube2Mp3Task;
 
 public final class ServicesProvider {
 
-	private static final String CURRENT_VERSION = "0.7";
-
 	private static final int CONVERSION_TIMEOUT_MINS = 5;
+
+	private static final String CURRENT_VERSION = "0.7";
 	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
 
-	private static final class VideoRequest {
+	public static final class DownloadMP3 extends ServerResource {
+
+		/**
+		 * Do get.
+		 *
+		 * @return the JSON object
+		 * @throws InterruptedException
+		 *             the interrupted exception
+		 * @throws ConstraintViolationException
+		 *             the constraint violation exception
+		 * @throws InvalidChoiceException
+		 *             the invalid choice exception
+		 * @throws JSONException
+		 *             the JSON exception
+		 */
+		@Get("application/json")
+		public String doGet() throws Exception {
+			configureRestForm(this);
+			JSONObject response = new JSONObject();
+			response.put("version", CURRENT_VERSION);
+			final String videoId = getRequest().getAttributes().get("video_id").toString();
+			if (videoId == null || videoId.equals("")) {
+				response.put("error", "Invalid video id!");
+				return response.toString(4);
+			} else {
+				final VideoRequest vr = new VideoRequest(videoId);
+				if (vr.isReady() && !vr.wasAborted()) {
+					response.put("ready", "The request was fulfilled.");
+					response.put("url", vr.getMp3Url());
+					response.put("cover", vr.getCoverUrl());
+					response.put("title", vr.getTitle());
+					return response.toString(4);
+				} else if (vr.isReady() && vr.wasAborted()) {
+					response.put("error", vr.getAbortedMessage());
+					return response.toString(4);
+				} else {
+					response.put("scheduled", "Wait until the request is fulfilled.");
+					return response.toString(4);
+				}
+			}
+		}
+
+	}
+
+	public static final class VideoRequest {
 		private static final Map<String, VideoRequest> completedRequests = new HashMap<String, VideoRequest>();
 		private static final Object lock = new Object();
 		private static final Map<String, VideoRequest> requestsQueue = new HashMap<String, VideoRequest>();
@@ -52,44 +91,44 @@ public final class ServicesProvider {
 
 		private final class DownloadThread extends Thread {
 
-			final Semaphore sem;
+			final Semaphore downloadFinishSem;
+
+			private final class ServerFetcher extends Thread {
+				private boolean hasError = false;
+				private boolean hasFinished = false;
+				final private Semaphore sem;
+
+				final private Task task;
+
+				public ServerFetcher(Semaphore sem, Task task) {
+					super("Server Fetcher for video " + videoId + " - " + task);
+					this.sem = sem;
+					this.task = task;
+				}
+
+				public boolean hasError() {
+					return this.hasError;
+				}
+
+				public boolean hasFinished() {
+					return this.hasFinished;
+				}
+
+				@Override
+				public void run() {
+					hasError = !task.run();
+					hasFinished = true;
+					// Finally release the lock
+					this.sem.release();
+				}
+			}
 
 			public DownloadThread(Semaphore sem) {
-				this.sem = sem;
+				super("Download Thread for video " + videoId);
+				this.downloadFinishSem = sem;
 			}
 
-			private boolean theYouMp3Error = false;
-			private boolean youtube2Mp3Error = false;
-
-			private boolean getTheYouMp3Error() {
-				return this.theYouMp3Error;
-			}
-
-			private boolean getYoutube2Mp3Error() {
-				return this.youtube2Mp3Error;
-			}
-
-			private void flagTheYouMp3Error() {
-				this.theYouMp3Error = true;
-				new Logger().log(Logger.LOG_ERROR, "Error scraping the TheYouMp3 website.");
-			}
-
-			private void flagYoutube2Mp3Error() {
-				this.youtube2Mp3Error = true;
-				new Logger().log(Logger.LOG_ERROR, "Error scraping the Youtube2Mp3 website.");
-			}
-
-			private void flagTheYouMp3Error(String msg) {
-				this.theYouMp3Error = true;
-				new Logger().log(Logger.LOG_ERROR, "Error scraping the TheYouMp3 website. " + msg);
-			}
-
-			private void flagYoutube2Mp3Error(String msg) {
-				this.youtube2Mp3Error = true;
-				new Logger().log(Logger.LOG_ERROR, "Error scraping the Youtube2Mp3 website. " + msg);
-			}
-
-			private boolean fetchVideoInfoFromServer() throws Exception {
+			private boolean fetchVideoInfoFromServer() {
 				/*
 				 * Initializing HTMLUnit
 				 */
@@ -98,114 +137,37 @@ public final class ServicesProvider {
 				java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
 				java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
 
-				WebClient webClient = null;
+				final Semaphore sem = new Semaphore(0);
+				final TheYouMp3Task task1 = new TheYouMp3Task(VideoRequest.this);
+				final Youtube2Mp3Task task2 = new Youtube2Mp3Task(VideoRequest.this);
+				final ServerFetcher t1 = new ServerFetcher(sem, task1);
+				final ServerFetcher t2 = new ServerFetcher(sem, task2);
+
+				t1.start();
+				t2.start();
 				try {
-					/*
-					 * Initializing WebClient
-					 */
-					webClient = new WebClient(BrowserVersion.FIREFOX_38);
-					webClient.setAjaxController(new NicelyResynchronizingAjaxController());
-					webClient.getOptions().setJavaScriptEnabled(true);
-					webClient.getOptions().setRedirectEnabled(true);
-
-					// TheYouMp3
-					HtmlPage theYouMp3Page = null;
-					String theYouMp3HttpResponse = null;
-					try {
-						theYouMp3Page = webClient
-								.getPage("http://www.theyoump3.com/a/pushItem/?item=https://www.youtube.com/watch?v="
-										+ VideoRequest.this.videoId);
-						theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
-						if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
-							flagTheYouMp3Error();
+					do {
+						sem.acquire();
+						if (t1.hasFinished() && !t1.hasError()) {
+							t2.interrupt();
+							t2.stop();
+							break;
+						} else if (t2.hasFinished() && !t2.hasError()) {
+							t1.interrupt();
+							t1.stop();
+							break;
 						}
-					} catch (Exception e) {
-						flagTheYouMp3Error(e.getMessage());
-					}
-
-					// Youtube2Mp3
-					HtmlPage youtube2Mp3Page = null;
-					HtmlAnchor youtube2Mp3An = null;
-					try {
-						youtube2Mp3Page = webClient.getPage("http://www.youtube2mp3.cc");
-						final HtmlTextInput youtube2Mp3TextField = (HtmlTextInput) youtube2Mp3Page
-								.getElementById("video");
-						final HtmlButton youtube2Mp3Button = (HtmlButton) youtube2Mp3Page.getElementById("button");
-						youtube2Mp3An = (HtmlAnchor) youtube2Mp3Page.getElementById("download");
-						youtube2Mp3TextField
-								.setValueAttribute("https://www.youtube.com/watch?v=" + VideoRequest.this.videoId);
-						youtube2Mp3Button.click();
-					} catch (Exception e) {
-						flagYoutube2Mp3Error(e.getMessage());
-					}
-
-					/*
-					 * While waiting for one response
-					 */
-					JSONObject theYouMp3JsonObject;
-					while (true) {
-						if (getTheYouMp3Error() && getYoutube2Mp3Error()) {
-							webClient.close();
-							return false;
-						}
-
-						// TheYouMp3
-						if (!theYouMp3Error) {
-							try {
-								theYouMp3Page = webClient.getPage(
-										"http://www.theyoump3.com/a/itemInfo/?video_id=" + VideoRequest.this.videoId);
-								theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
-								if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
-									flagTheYouMp3Error();
-								}
-								theYouMp3HttpResponse = theYouMp3HttpResponse.substring(7);
-								theYouMp3JsonObject = new JSONObject(theYouMp3HttpResponse);
-								if (theYouMp3JsonObject.has("status")) {
-									if (theYouMp3JsonObject.get("status").equals("serving")) {
-										VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/"
-												+ VideoRequest.this.videoId + "/default.jpg";
-										VideoRequest.this.title = theYouMp3JsonObject.getString("title");
-										VideoRequest.this.mp3Url = "http://www.theyoump3.com/get?ab=128&video_id="
-												+ VideoRequest.this.videoId + "&h="
-												+ theYouMp3JsonObject.getString("h");
-										webClient.close();
-										return true;
-									}
-								} else {
-									flagTheYouMp3Error();
-								}
-							} catch (Exception e) {
-								flagTheYouMp3Error(e.getMessage());
-							}
-						}
-
-						// Youtube2Mp3
-						if (!youtube2Mp3Error) {
-							try {
-								if (youtube2Mp3An.getAttribute("href").toString().contains("http")) {
-									VideoRequest.this.mp3Url = youtube2Mp3An.getAttribute("href").toString();
-									VideoRequest.this.coverUrl = "http://i.ytimg.com/vi/" + videoId + "/default.jpg";
-									VideoRequest.this.title = youtube2Mp3Page.getElementById("title").asText();
-									webClient.close();
-									return true;
-								} else if (youtube2Mp3Page.getElementById("error") != null) {
-									flagYoutube2Mp3Error();
-								}
-							} catch (Exception e) {
-								flagYoutube2Mp3Error(e.getMessage());
-							}
-						}
-						Thread.sleep(1000);
-					}
-
-				} catch (Exception e) {
-					new Logger().log(Logger.LOG_ERROR, "Error scraping the website. " + e.getMessage());
-					e.printStackTrace();
-					if (webClient != null) {
-						webClient.close();
-					}
+					} while (!t1.hasFinished() || !t2.hasFinished());
+				} catch (InterruptedException e) {
+					t1.interrupt();
+					t1.stop();
+					t2.interrupt();
+					t2.stop();
 					return false;
+
 				}
+				return !(t1.hasError() && t2.hasError());
+
 			}
 
 			@Override
@@ -227,24 +189,24 @@ public final class ServicesProvider {
 				if (!success) {
 					VideoRequest.this.abortRequest("There was an error connecting to Youtube.");
 				}
-				sem.release();
+				downloadFinishSem.release();
 				return;
 			}
 		}
 
-		public static final class AbortedRequestsCleaner extends Thread {
-			private static AbortedRequestsCleaner r;
+		public static final class OldRequestsCleaner extends Thread {
+			private static OldRequestsCleaner r;
 
 			public static void startCleaner() {
 				if (r == null) {
-					r = new AbortedRequestsCleaner();
-					new Logger().log(Logger.LOG_INFO, "Aborted Requests Cleaner started.");
+					r = new OldRequestsCleaner();
+					new Logger().log(Logger.LOG_INFO, "Old Requests Cleaner started.");
 					r.start();
 				}
 			}
 
-			private AbortedRequestsCleaner() {
-				super("Aborted Requests Remover");
+			private OldRequestsCleaner() {
+				super("Old Requests Remover");
 			}
 
 			@Override
@@ -260,8 +222,7 @@ public final class ServicesProvider {
 										.toMinutes(System.currentTimeMillis() - vr.getValue().getAbortedTimestamp());
 								if (delta >= MAX_MINUTES_STORING_RESOLVED_REQUEST) {
 									toRemove.add(vr.getKey());
-									new Logger().log(Logger.LOG_INFO,
-											"Removed old aborted request " + vr.getKey() + ".");
+									new Logger().log(Logger.LOG_INFO, "Removed old request " + vr.getKey() + ".");
 								}
 							}
 							for (String v : toRemove) {
@@ -272,12 +233,12 @@ public final class ServicesProvider {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				new Logger().log(Logger.LOG_INFO, "Aborted Requests Cleaner stopped.");
+				new Logger().log(Logger.LOG_INFO, "Old Requests Cleaner stopped.");
 			}
 		}
 
 		{
-			AbortedRequestsCleaner.startCleaner();
+			OldRequestsCleaner.startCleaner();
 		}
 
 		public VideoRequest(final String videoId) {
@@ -323,7 +284,8 @@ public final class ServicesProvider {
 		private void download() {
 			while (retries < MAX_RETRIES) {
 				/*
-				 * Semaphore released only when the download finishes (with error or not).
+				 * Semaphore released only when the download finishes (with
+				 * error or not).
 				 */
 				final Semaphore sem = new Semaphore(0);
 				final Thread t = new DownloadThread(sem);
@@ -376,6 +338,10 @@ public final class ServicesProvider {
 			return title;
 		}
 
+		public String getVideoId() {
+			return videoId;
+		}
+
 		public boolean isDownloadingAlready() {
 			synchronized (lock) {
 				return requestsQueue.get(this.videoId) != null;
@@ -384,6 +350,18 @@ public final class ServicesProvider {
 
 		public boolean isReady() {
 			return this.ready;
+		}
+
+		public void setCoverUrl(String coverUrl) {
+			this.coverUrl = coverUrl;
+		}
+
+		public void setMp3Url(String mp3Url) {
+			this.mp3Url = mp3Url;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
 		}
 
 		public boolean wasAborted() {
@@ -395,50 +373,6 @@ public final class ServicesProvider {
 				return completedRequests.get(this.videoId);
 			}
 		}
-	}
-
-	public static final class DownloadMP3 extends ServerResource {
-
-		/**
-		 * Do get.
-		 *
-		 * @return the JSON object
-		 * @throws InterruptedException
-		 *             the interrupted exception
-		 * @throws ConstraintViolationException
-		 *             the constraint violation exception
-		 * @throws InvalidChoiceException
-		 *             the invalid choice exception
-		 * @throws JSONException
-		 *             the JSON exception
-		 */
-		@Get("application/json")
-		public String doGet() throws Exception {
-			configureRestForm(this);
-			JSONObject response = new JSONObject();
-			response.put("version", CURRENT_VERSION);
-			final String videoId = getRequest().getAttributes().get("video_id").toString();
-			if (videoId == null || videoId.equals("")) {
-				response.put("error", "Invalid video id!");
-				return response.toString(4);
-			} else {
-				final VideoRequest vr = new VideoRequest(videoId);
-				if (vr.isReady() && !vr.wasAborted()) {
-					response.put("ready", "The request was fulfilled.");
-					response.put("url", vr.getMp3Url());
-					response.put("cover", vr.getCoverUrl());
-					response.put("title", vr.getTitle());
-					return response.toString(4);
-				} else if (vr.isReady() && vr.wasAborted()) {
-					response.put("error", vr.getAbortedMessage());
-					return response.toString(4);
-				} else {
-					response.put("scheduled", "Wait until the request is fulfilled.");
-					return response.toString(4);
-				}
-			}
-		}
-
 	}
 
 	/**
