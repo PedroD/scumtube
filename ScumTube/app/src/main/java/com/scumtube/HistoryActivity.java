@@ -39,7 +39,8 @@ public class HistoryActivity extends AbstractActivity {
         setContentView(R.layout.activity_history);
 
         AdView mAdView = (AdView) findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").addTestDevice("58B2FFDEEAA2B8B16A6A3969DCEB6570").build(); //TODO remove addTestDevice for production
+        //AdRequest adRequest = new AdRequest.Builder().addTestDevice("8466E20A350086795264CE662B18DC59").addTestDevice("58B2FFDEEAA2B8B16A6A3969DCEB6570").build(); //TODO remove addTestDevice for production
+        AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
     }
 
