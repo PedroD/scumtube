@@ -37,6 +37,7 @@ public final class Youtube2Mp3Task implements Task {
 			webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 			webClient.getOptions().setJavaScriptEnabled(true);
 			webClient.getOptions().setRedirectEnabled(true);
+			webClient.getOptions().setCssEnabled(false);
 
 			HtmlPage youtube2Mp3Page = null;
 			HtmlAnchor youtube2Mp3An = null;

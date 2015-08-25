@@ -17,6 +17,7 @@ import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
 import youtube.to.mp3.converters.Youtube2Mp3Task;
+import youtube.to.mp3.converters.Mp3FiberTask;
 import youtube.to.mp3.converters.TheYouMp3Task;
 
 public final class ServicesProvider {
@@ -27,7 +28,7 @@ public final class ServicesProvider {
 	private static final int MAX_MINUTES_STORING_RESOLVED_REQUEST = 1;
 	private static final int MAX_RETRIES = 3;
 	private static final int MAX_SIMULTANEOUS_DOWNLOADS = 10;
-
+	
 	public static final class DownloadMP3 extends ServerResource {
 
 		/**
@@ -129,6 +130,7 @@ public final class ServicesProvider {
 			}
 
 			private boolean fetchVideoInfoFromServer() {
+				final ArrayList<ServerFetcher> serversTasks = new ArrayList<ServerFetcher>();
 				/*
 				 * Initializing HTMLUnit
 				 */
@@ -138,35 +140,51 @@ public final class ServicesProvider {
 				java.util.logging.Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
 
 				final Semaphore sem = new Semaphore(0);
-				final Youtube2Mp3Task task1 = new Youtube2Mp3Task(VideoRequest.this);
-				final TheYouMp3Task task2 = new TheYouMp3Task(VideoRequest.this);
-				final ServerFetcher t1 = new ServerFetcher(sem, task1);
-				final ServerFetcher t2 = new ServerFetcher(sem, task2);
-
-				t1.start();
-				t2.start();
+				
+				serversTasks.add(new ServerFetcher(sem, new Youtube2Mp3Task(VideoRequest.this)));
+				serversTasks.add(new ServerFetcher(sem, new TheYouMp3Task(VideoRequest.this)));
+				serversTasks.add(new ServerFetcher(sem, new Mp3FiberTask(VideoRequest.this)));
+				
+				for(ServerFetcher t : serversTasks){
+					t.start();
+				}
 				try {
+					boolean allTasksFinished;
+					boolean oneTaskFinished = false;
 					do {
 						sem.acquire();
-						if (t1.hasFinished() && !t1.hasError()) {
-							t2.interrupt();
-							t2.stop();
-							break;
-						} else if (t2.hasFinished() && !t2.hasError()) {
-							t1.interrupt();
-							t1.stop();
+						for(ServerFetcher t1 : serversTasks){
+							if(t1.hasFinished() && !t1.hasError()){
+								for(ServerFetcher t2 : serversTasks){
+									if(!t1.equals(t2)){
+										t2.interrupt();
+										t2.stop();
+									}									
+								}
+								oneTaskFinished = true;
+								break;
+							}
+						}
+						if(oneTaskFinished){
 							break;
 						}
-					} while (!t1.hasFinished() || !t2.hasFinished());
+						allTasksFinished = true;
+						for(ServerFetcher t : serversTasks){
+							allTasksFinished = allTasksFinished && t.hasFinished();
+						}
+					} while (!allTasksFinished);
 				} catch (InterruptedException e) {
-					t1.interrupt();
-					t1.stop();
-					t2.interrupt();
-					t2.stop();
+					for(ServerFetcher t : serversTasks){
+						t.interrupt();
+						t.stop();
+					}
 					return false;
-
 				}
-				return !(t1.hasError() && t2.hasError());
+				boolean allTasksHadError = true;
+				for(ServerFetcher t : serversTasks){
+					allTasksHadError = allTasksHadError && t.hasError();
+				}
+				return !allTasksHadError;
 
 			}
 

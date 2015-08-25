@@ -36,6 +36,7 @@ public final class TheYouMp3Task implements Task {
 			webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 			webClient.getOptions().setJavaScriptEnabled(true);
 			webClient.getOptions().setRedirectEnabled(true);
+			webClient.getOptions().setCssEnabled(false);
 
 			new Logger().log(Logger.LOG_INFO, "Request (" + this + "): Started making request.");
 			HtmlPage theYouMp3Page = null;
@@ -64,28 +65,31 @@ public final class TheYouMp3Task implements Task {
 			while (true) {
 				try {
 					new Logger().log(Logger.LOG_INFO, "Response (" + this + "): Waiting a bit more...");
+					webClient.getCache().clear();
 					theYouMp3Page = webClient
 							.getPage("http://www.theyoump3.com/a/itemInfo/?video_id=" + vr.getVideoId());
 					theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
 					if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
 						return false;
 					}
-					theYouMp3HttpResponse = theYouMp3HttpResponse.substring(7);
-					theYouMp3JsonObject = new JSONObject(theYouMp3HttpResponse);
-					if (theYouMp3JsonObject.has("status")) {
-						if (theYouMp3JsonObject.get("status").equals("serving")) {
-							vr.setCoverUrl("http://i.ytimg.com/vi/" + vr.getVideoId() + "/default.jpg");
-							vr.setTitle(theYouMp3JsonObject.getString("title"));
-							vr.setMp3Url("http://www.theyoump3.com/get?ab=128&video_id=" + vr.getVideoId() + "&h="
-									+ theYouMp3JsonObject.getString("h"));
-							webClient.close();
-							new Logger().log(Logger.LOG_INFO,
-									"Response (" + this + "): Finished getting MP3 with success!");
-							return true;
+					if (theYouMp3HttpResponse.length() > 7) {
+						theYouMp3HttpResponse = theYouMp3HttpResponse.substring(7);
+						theYouMp3JsonObject = new JSONObject(theYouMp3HttpResponse);
+						if (theYouMp3JsonObject.has("status")) {
+							if (theYouMp3JsonObject.get("status").equals("serving")) {
+								vr.setCoverUrl("http://i.ytimg.com/vi/" + vr.getVideoId() + "/default.jpg");
+								vr.setTitle(theYouMp3JsonObject.getString("title"));
+								vr.setMp3Url("http://www.theyoump3.com/get?ab=128&video_id=" + vr.getVideoId() + "&h="
+										+ theYouMp3JsonObject.getString("h"));
+								webClient.close();
+								new Logger().log(Logger.LOG_INFO,
+										"Response (" + this + "): Finished getting MP3 with success!");
+								return true;
+							}
+							new Logger().log(Logger.LOG_INFO, "Response (" + this + "): MP3 not ready yet.");
+						} else {
+							return false;
 						}
-						new Logger().log(Logger.LOG_INFO, "Response (" + this + "): MP3 not ready yet.");
-					} else {
-						return false;
 					}
 				} catch (Exception e) {
 					if (!(e instanceof InterruptedException))
