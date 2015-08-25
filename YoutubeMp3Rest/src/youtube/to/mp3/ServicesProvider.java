@@ -141,9 +141,9 @@ public final class ServicesProvider {
 
 				final Semaphore sem = new Semaphore(0);
 				
-				serversTasks.add(new ServerFetcher(sem, new Youtube2Mp3Task(VideoRequest.this)));
+//				serversTasks.add(new ServerFetcher(sem, new Youtube2Mp3Task(VideoRequest.this)));
 				serversTasks.add(new ServerFetcher(sem, new TheYouMp3Task(VideoRequest.this)));
-				serversTasks.add(new ServerFetcher(sem, new Mp3FiberTask(VideoRequest.this)));
+//				serversTasks.add(new ServerFetcher(sem, new Mp3FiberTask(VideoRequest.this)));
 				
 				for(ServerFetcher t : serversTasks){
 					t.start();

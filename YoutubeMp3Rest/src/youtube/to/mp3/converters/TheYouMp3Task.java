@@ -70,6 +70,10 @@ public final class TheYouMp3Task implements Task {
 							.getPage("http://www.theyoump3.com/a/itemInfo/?video_id=" + vr.getVideoId());
 					theYouMp3HttpResponse = theYouMp3Page.getBody().asText();
 					if (theYouMp3HttpResponse == null || theYouMp3HttpResponse.contains("ERROR")) {
+						new Logger().log(Logger.LOG_ERROR,
+								"Error scraping the " + this
+										+ " website. theYouMp3HttpResponse variable is null or contains error? theYouMp3HttpResponse = "
+										+ theYouMp3HttpResponse);
 						return false;
 					}
 					if (theYouMp3HttpResponse.length() > 7) {
@@ -88,6 +92,8 @@ public final class TheYouMp3Task implements Task {
 							}
 							new Logger().log(Logger.LOG_INFO, "Response (" + this + "): MP3 not ready yet.");
 						} else {
+							new Logger().log(Logger.LOG_ERROR,
+									"Error scraping the " + this + " website. theYouMp3HttpResponse has no status!");
 							return false;
 						}
 					}
