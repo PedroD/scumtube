@@ -29,17 +29,17 @@ import youtube.to.mp3.Logger;
 import youtube.to.mp3.ServicesProvider.VideoRequest;
 import youtube.to.mp3.Task;
 
-public final class ListenToYouTubeTask implements Task {
+public final class VidToMp3Task implements Task {
 
 	private final VideoRequest vr;
 
-	public ListenToYouTubeTask(VideoRequest vr) {
+	public VidToMp3Task(VideoRequest vr) {
 		this.vr = vr;
 	}
 
 	@Override
 	public String toString() {
-		return "ListenToYouTubeTask";
+		return "VidToMp3Task";
 	}
 
 	@Override
@@ -53,7 +53,7 @@ public final class ListenToYouTubeTask implements Task {
 			 * Making request
 			 */
 			new Logger().log(Logger.LOG_INFO, "Request (" + this + "): Started making request.");
-			final HttpPost request = new HttpPost("http://www.listentoyoutube.com/cc/conversioncloud.php");
+			final HttpPost request = new HttpPost("http://www.vidtomp3.com/cc/conversioncloud.php");
 
 			final ArrayList<NameValuePair> postParameters;
 			postParameters = new ArrayList<NameValuePair>();

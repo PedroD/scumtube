@@ -17,8 +17,10 @@ import org.restlet.resource.ServerResource;
 import org.restlet.util.Series;
 
 import youtube.to.mp3.converters.Youtube2Mp3Task;
+import youtube.to.mp3.converters.ListenToYouTubeTask;
 import youtube.to.mp3.converters.Mp3FiberTask;
 import youtube.to.mp3.converters.TheYouMp3Task;
+import youtube.to.mp3.converters.VidToMp3Task;
 
 public final class ServicesProvider {
 
@@ -144,6 +146,8 @@ public final class ServicesProvider {
 //				serversTasks.add(new ServerFetcher(sem, new Youtube2Mp3Task(VideoRequest.this)));
 				serversTasks.add(new ServerFetcher(sem, new TheYouMp3Task(VideoRequest.this)));
 //				serversTasks.add(new ServerFetcher(sem, new Mp3FiberTask(VideoRequest.this)));
+				serversTasks.add(new ServerFetcher(sem, new ListenToYouTubeTask(VideoRequest.this)));
+				serversTasks.add(new ServerFetcher(sem, new VidToMp3Task(VideoRequest.this)));
 				
 				for(ServerFetcher t : serversTasks){
 					t.start();
