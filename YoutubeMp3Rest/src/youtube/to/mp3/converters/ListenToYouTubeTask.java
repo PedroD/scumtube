@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -84,7 +85,7 @@ public final class ListenToYouTubeTask implements Task {
 
 				// creating json response from string
 				final String jsonString = stringBuilder.toString().substring(1);
-				//new Logger().log(Logger.LOG_INFO, this + " Json String: " + jsonString);
+				new Logger().log(Logger.LOG_INFO, this + "Response (" + this + "): " + jsonString);
 				JSONObject jsonObject = new JSONObject(jsonString);
 
 				/*
@@ -93,37 +94,47 @@ public final class ListenToYouTubeTask implements Task {
 				new Logger().log(Logger.LOG_INFO, "Response (" + this + "): Waiting for response.");
 				if (jsonObject.has("statusurl")) {
 					while (true) {
-						new Logger().log(Logger.LOG_INFO, "Response (" + this + "): Waiting a bit more...");
-						HttpGet statusGet = new HttpGet(jsonObject.get("statusurl").toString());
+						try {
+							new Logger().log(Logger.LOG_INFO, "Response (" + this + "): Waiting a bit more...");
+							HttpGet statusGet = new HttpGet(jsonObject.get("statusurl").toString());
 
-						// parsing xml string to Document
-						String xmlString = httpClient.execute(statusGet, new BasicResponseHandler());
-						DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-						DocumentBuilder builder;
-						builder = factory.newDocumentBuilder();
-						Document doc = builder.parse(new InputSource(new StringReader(xmlString)));
+							// parsing xml string to Document
+							String xmlString = httpClient.execute(statusGet, new BasicResponseHandler());
+							DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+							DocumentBuilder builder;
+							builder = factory.newDocumentBuilder();
+							Document doc = builder.parse(new InputSource(new StringReader(xmlString)));
 
-						Element conversioncloud = (Element) doc.getElementsByTagName("conversioncloud").item(0);
+							Element conversioncloud = (Element) doc.getElementsByTagName("conversioncloud").item(0);
 
-						if (conversioncloud != null) {
-							Element status = (Element) conversioncloud.getElementsByTagName("status").item(0);
-							if (status != null) {
-								if (status.getAttribute("step").equals("finished")) {
-									Element downloadurl = (Element) conversioncloud.getElementsByTagName("downloadurl")
-											.item(0);
-									Element file = (Element) conversioncloud.getElementsByTagName("file").item(0);
-									String title;
-									if (file.getTextContent().length() > 3) {
-										title = file.getTextContent().substring(0, file.getTextContent().length() - 5);
-									} else {
-										title = "There was an error parsing the title";
+							if (conversioncloud != null) {
+								Element status = (Element) conversioncloud.getElementsByTagName("status").item(0);
+								if (status != null) {
+									if (status.getAttribute("step").equals("finished")) {
+										Element downloadurl = (Element) conversioncloud
+												.getElementsByTagName("downloadurl").item(0);
+										Element file = (Element) conversioncloud.getElementsByTagName("file").item(0);
+										String title;
+										if (file.getTextContent().length() > 3) {
+											title = new String(file.getTextContent()
+													.substring(0, file.getTextContent().length() - 4).getBytes(),
+													Charset.forName("UTF-8"));
+										} else {
+											title = "There was an error parsing the title";
+										}
+										vr.setCoverUrl("http://i.ytimg.com/vi/" + vr.getVideoId() + "/default.jpg");
+										vr.setTitle(title);
+										vr.setMp3Url(downloadurl.getTextContent());
+										return true;
 									}
-									vr.setCoverUrl("http://i.ytimg.com/vi/" + vr.getVideoId() + "/default.jpg");
-									vr.setTitle(title);
-									vr.setMp3Url(downloadurl.getTextContent());
-									return true;
 								}
 							}
+						} catch (Exception e) {
+							if (!(e instanceof InterruptedException))
+								e.printStackTrace();
+							new Logger().log(Logger.LOG_ERROR,
+									"Error scraping the " + this + " website. " + e.getMessage());
+							return false;
 						}
 						Thread.sleep(1500);
 					}
