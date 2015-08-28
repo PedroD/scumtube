@@ -12,7 +12,7 @@ public final class UncaughtExceptionReporter implements Thread.UncaughtException
 
     @Override
     public void uncaughtException(final Thread paramThread, final Throwable paramThrowable) {
-        Log.e(ScumTubeApplication.TAG, "Severe error: " + paramThrowable.getClass().getName(), paramThrowable);
+        Logger.e(ScumTubeApplication.TAG, "Severe error: " + paramThrowable.getClass().getName(), paramThrowable);
         androidDefaultUEH.uncaughtException(paramThread, paramThrowable);
         System.exit(2);
     }

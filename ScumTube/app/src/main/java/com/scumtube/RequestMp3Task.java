@@ -40,7 +40,7 @@ public class RequestMp3Task extends Thread {
         String requestUrl = "http://176.111.109.23:9194/video_id/" + videoId;
         HttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(requestUrl);
-        Log.i(ScumTubeApplication.TAG, "Requesting music " + requestUrl);
+        Logger.i(ScumTubeApplication.TAG, "Requesting music " + requestUrl);
         try {
             JSONObject jsonObject;
             while (!this.isInterrupted()) {
@@ -61,7 +61,7 @@ public class RequestMp3Task extends Thread {
                     bufferedReader.close();
 
                     if (this.isInterrupted()) {
-                        Log.w(ScumTubeApplication.TAG, "Download task interrupted");
+                        Logger.w(ScumTubeApplication.TAG, "Download task interrupted");
                         return;
                     }
 
@@ -83,7 +83,7 @@ public class RequestMp3Task extends Thread {
                         mp3Url = jsonObject.getString("url");
                         coverUrl = jsonObject.getString("cover");
                         title = jsonObject.getString("title");
-                        Log.i(ScumTubeApplication.TAG, title + " :: " + mp3Url + " :: " + coverUrl);
+                        Logger.i(ScumTubeApplication.TAG, title + " :: " + mp3Url + " :: " + coverUrl);
 
                         message = "";
                         hadSuccess = true;
@@ -93,22 +93,22 @@ public class RequestMp3Task extends Thread {
                         final String errorMsg = jsonObject.getString("error");
                         throw new Exception(errorMsg);
                     }
-                    Log.i(ScumTubeApplication.TAG, jsonObject.getString("scheduled"));
+                    Logger.i(ScumTubeApplication.TAG, jsonObject.getString("scheduled"));
                     Thread.sleep(2000);
                 }
             }
             if (this.isInterrupted()) {
-                Log.w(ScumTubeApplication.TAG, "Download task interrupted.");
+                Logger.w(ScumTubeApplication.TAG, "Download task interrupted.");
                 hasFinished.release();
                 return;
             }
         } catch (InterruptedException e) {
-            Log.w(ScumTubeApplication.TAG, "Download task interrupted.");
+            Logger.w(ScumTubeApplication.TAG, "Download task interrupted.");
             hasFinished.release();
             return;
         } catch (Exception e) {
             e.printStackTrace();
-            Log.e(ScumTubeApplication.TAG, e.getClass().getName(), e);
+            Logger.e(ScumTubeApplication.TAG, e.getClass().getName(), e);
             message = "There was a problem contacting YouTube. Please check your Internet connection.";
             hasFinished.release();
             return;

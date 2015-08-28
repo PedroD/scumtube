@@ -59,7 +59,7 @@ public class PlayerService extends AbstractService {
 
     @Override
     public void onCreate() {
-        Log.i(ScumTubeApplication.TAG, "On create invoked.");
+        Logger.i(ScumTubeApplication.TAG, "On create invoked.");
         super.onCreate();
 
         // Initialize PhoneCallListener
@@ -77,12 +77,12 @@ public class PlayerService extends AbstractService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(ScumTubeApplication.TAG, "On start command invoked: " + intent);
+        Logger.i(ScumTubeApplication.TAG, "On start command invoked: " + intent);
 
         synchronized (canExitLock) {
             if (intent.getExtras() != null) {
                 if (requestMp3 != null) {
-                    Log.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
+                    Logger.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
                     requestMp3.interrupt();
                     requestMp3 = null;
                 }
@@ -160,7 +160,7 @@ public class PlayerService extends AbstractService {
 
     public void exit() {
         synchronized (canExitLock) {
-            Log.i(ScumTubeApplication.TAG, "Stopping player.");
+            Logger.i(ScumTubeApplication.TAG, "Stopping player.");
             if (requestMp3 != null) {
                 requestMp3.interrupt();
                 requestMp3 = null;
@@ -287,7 +287,7 @@ public class PlayerService extends AbstractService {
 
     @Override
     public void onDestroy() {
-        Log.w(ScumTubeApplication.TAG, "Player Service being destroyed.");
+        Logger.w(ScumTubeApplication.TAG, "Player Service being destroyed.");
         this.exit();
     }
 
@@ -425,34 +425,34 @@ public class PlayerService extends AbstractService {
         public void onAudioFocusChange(int focusChange) {
             switch (focusChange) {
                 case AudioManager.AUDIOFOCUS_GAIN:
-                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN");
+                    Logger.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
+                    Logger.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                    Log.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
+                    Logger.i(ScumTubeApplication.TAG, "AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK");
                     // Set volume level to desired levels
                     // returnVolumeToNormal();
                     play();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS:
-                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS");
+                    Logger.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
+                    Logger.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT");
                     // Lower the volume
                     pause();
                     break;
                 case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    Log.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
+                    Logger.e(ScumTubeApplication.TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK");
                     // Lower the volume
                     pause();
                     break;
@@ -494,9 +494,9 @@ public class PlayerService extends AbstractService {
                 }
                 synchronized (canExitLock) {
                     try {
-                        Log.i(ScumTubeApplication.TAG, "Drawing notification player...");
+                        Logger.i(ScumTubeApplication.TAG, "Drawing notification player...");
                         PlayerService.this.start();
-                        Log.i(ScumTubeApplication.TAG, "Finished drawing notification player.");
+                        Logger.i(ScumTubeApplication.TAG, "Finished drawing notification player.");
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                             downloadImageTask = new DownloadImageTask(sStreamCoverUrl);
                             if (this.isInterrupted()) {
@@ -507,7 +507,7 @@ public class PlayerService extends AbstractService {
                             updateMusicList();
                         }
                     } catch (Exception e) {
-                        Log.i(ScumTubeApplication.TAG, e.getClass().getName(), e);
+                        Logger.i(ScumTubeApplication.TAG, e.getClass().getName(), e);
                         System.exit(2);
                     }
                 }
@@ -534,14 +534,14 @@ public class PlayerService extends AbstractService {
 
         @Override
         public void run() {
-            Log.i(ScumTubeApplication.TAG, "Loading cover image...");
+            Logger.i(ScumTubeApplication.TAG, "Loading cover image...");
             try {
                 Bitmap image = null;
                 try {
                     InputStream in = new java.net.URL(imageUrl).openStream();
                     image = BitmapFactory.decodeStream(in);
                 } catch (Exception e) {
-                    Log.e("Error", e.getMessage());
+                    Logger.e("Error", e.getMessage());
                     e.printStackTrace();
                 }
                 sCover = image;
@@ -550,9 +550,9 @@ public class PlayerService extends AbstractService {
                 updateMusicList();
             } catch (Exception e) {
                 if (e.getMessage() != null)
-                    Log.i(ScumTubeApplication.TAG, e.getMessage());
+                    Logger.i(ScumTubeApplication.TAG, e.getMessage());
             }
-            Log.i(ScumTubeApplication.TAG, "Finished loading cover image.");
+            Logger.i(ScumTubeApplication.TAG, "Finished loading cover image.");
         }
     }
 

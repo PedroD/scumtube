@@ -40,7 +40,7 @@ public class DownloadService extends AbstractService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.i(ScumTubeApplication.TAG, "On start command download invoked: " + intent);
+        Logger.i(ScumTubeApplication.TAG, "On start command download invoked: " + intent);
         final String ytUrl = intent.getStringExtra("ytUrl");
         updateExternalStorageState();
 
@@ -96,11 +96,11 @@ public class DownloadService extends AbstractService {
     }
 
     private void exit(int notificationId) {
-        Log.i(ScumTubeApplication.TAG, "Exiting: " + notificationId);
+        Logger.i(ScumTubeApplication.TAG, "Exiting: " + notificationId);
 
         final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
         if (m != null) {
-            Log.i(ScumTubeApplication.TAG, "Found exiting: " + notificationId);
+            Logger.i(ScumTubeApplication.TAG, "Found exiting: " + notificationId);
             musicDownloadingArrayList.remove(m);
             m.exit();
             return;
@@ -192,7 +192,7 @@ public class DownloadService extends AbstractService {
         }
 
         public Notification createDownloadNotification(int icon) {
-            Log.i(ScumTubeApplication.TAG, "Creating download progress notification");
+            Logger.i(ScumTubeApplication.TAG, "Creating download progress notification");
 
             final Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
                     DownloadService.class);
@@ -324,7 +324,7 @@ public class DownloadService extends AbstractService {
         public void run() {
             try {
                 String titleEscaped = addEscapeChars(title);
-                Log.i(ScumTubeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                Logger.i(ScumTubeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                 URL url = new URL(mp3Url);
                 URLConnection connection = url.openConnection();
                 connection.connect();
@@ -332,7 +332,7 @@ public class DownloadService extends AbstractService {
                 int fileLength = connection.getContentLength();
 
                 if (isInterrupted()) {
-                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                    Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     return;
                 }
 
@@ -346,7 +346,7 @@ public class DownloadService extends AbstractService {
 
                 String filePath = directoryPath + titleEscaped + ".mp3";
 
-                Log.i(ScumTubeApplication.TAG, "Output directory: " + filePath);
+                Logger.i(ScumTubeApplication.TAG, "Output directory: " + filePath);
 
 
                 File file;
@@ -356,7 +356,7 @@ public class DownloadService extends AbstractService {
                     if (!file.exists()) {
                         break;
                     }
-                    Log.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
+                    Logger.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
                     filePath = directoryPath + titleEscaped + "(" + i + ")" + ".mp3";
                     i++;
                 }
@@ -364,7 +364,7 @@ public class DownloadService extends AbstractService {
                 OutputStream output = new FileOutputStream(filePath);
 
                 if (isInterrupted()) {
-                    Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                    Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     output.close();
                     input.close();
                     return;
@@ -378,7 +378,7 @@ public class DownloadService extends AbstractService {
                     progress = (int) (total * 100 / fileLength);
                     output.write(data, 0, count);
                     if (isInterrupted()) {
-                        Log.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                        Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                         output.close();
                         input.close();
                         new File(filePath).delete();
@@ -390,7 +390,7 @@ public class DownloadService extends AbstractService {
                 input.close();
                 MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
                 m.setFilePath(filePath);
-                Log.i(ScumTubeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                Logger.i(ScumTubeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -416,7 +416,7 @@ public class DownloadService extends AbstractService {
         public void run() {
             while (!isInterrupted()) {
                 for (MusicDownloading m : musicDownloadingArrayList) {
-                    Log.i(ScumTubeApplication.TAG, "Check progress: " + m.getYtUrl());
+                    Logger.i(ScumTubeApplication.TAG, "Check progress: " + m.getYtUrl());
                     if(m.getDownloadMp3() != null) {
                         if (!isInterrupted() && !m.isDone()) {
                             m.updateNotification(m.getNotification(),
