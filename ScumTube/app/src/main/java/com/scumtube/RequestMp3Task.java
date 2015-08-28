@@ -37,7 +37,7 @@ public class RequestMp3Task extends Thread {
 
     @Override
     public void run() {
-        String requestUrl = "http://176.111.109.11:9194/video_id/" + videoId;
+        String requestUrl = "http://176.111.109.23:9194/video_id/" + videoId;
         HttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(requestUrl);
         Log.i(ScumTubeApplication.TAG, "Requesting music " + requestUrl);
