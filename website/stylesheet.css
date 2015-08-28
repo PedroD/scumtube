@@ -67,6 +67,12 @@
         background: rgba(1, 1, 1, 0.05);
     }
 
+    .download-wrapper {
+        margin-top: 15pt;
+        text-align: center;
+        font-size: 150%;
+    }
+
     .download {
         display: inline-block;
         width: 500px;
@@ -160,6 +166,11 @@
         width: 70pt;
         height: 70pt;
         background: rgba(1, 1, 1, 0.05);
+    }
+
+    .download-wrapper {
+        margin-top: 15pt;
+        text-align: center;
     }
 
     .download {
@@ -292,10 +303,6 @@ body {
     vertical-align: middle;
 }
 
-.button-wrapper {
-    margin-top: 15pt;
-    text-align: center;
-}
 
 #screen-1 {
     width: 172pt;

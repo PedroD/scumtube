@@ -5,7 +5,9 @@
     <string name="loading">Your music is loading. Please wait.</string>
     <string name="loading_advice">Please don\'t turn off your internet connection.</string>
     <string name="app_name">ScumTube</string>
-    <string name="intent">Background Play</string>
+    <string name="intent_backgroundplay">Background Play</string>
+    <string name="intent_download">Download mp3</string>
+
     <string name="banner_ad_unit_id">ca-app-pub-4389360825353387/3666187355</string>
 
     <string name="history_activity">Music History</string>
@@ -19,6 +21,7 @@
 
     <string name="download_done">Download complete. Click to open the music.</string>
     <string name="download_connecting">Establishing connection...</string>
+    <string name="title_activity_download">DownloadActivity</string>
 
 
 

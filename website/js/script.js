@@ -7,7 +7,7 @@ $(document).ready(function(){
 });
 
 function download() {
-	$(".download").hide();
+	$(".download-wrapper").hide();
 	$("#about").hide();
 	$(".disclaimer").css("display", "block");
 }

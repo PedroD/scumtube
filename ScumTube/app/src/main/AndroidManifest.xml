@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.scumtube">
+    package="com.scumtube" >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -33,7 +33,7 @@
             android:theme="@android:style/Theme.NoDisplay" >
             <intent-filter
                 android:icon="@drawable/backyt"
-                android:label="@string/intent" >
+                android:label="@string/intent_backgroundplay" >
                 <action android:name="android.intent.action.SEND" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -78,6 +78,28 @@
             android:enabled="true"
             android:exported="true" >
         </service>
+
+        <activity
+            android:name=".DownloadActivity"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:noHistory="true"
+            android:stateNotNeeded="true"
+            android:theme="@android:style/Theme.NoDisplay" >
+            <intent-filter
+                android:icon="@drawable/backyt"
+                android:label="@string/intent_download" >
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="www.youtube.com"
+                    android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -16,9 +16,9 @@
 <body>
 <div class="donation_wrapper">
     <div>
-            <span>
-                For sustaining the servers behind ScumTube, in order to provide a <b>free</b> service, we are forced to sacrifice our personal time and financial resources, please
-            </span>
+        <span>
+            For sustaining the servers behind ScumTube, in order to provide a <b>free</b> service, we are forced to sacrifice our personal time and financial resources, please
+        </span>
 
         <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
             <input type="hidden" name="cmd" value="_s-xclick">
@@ -93,8 +93,9 @@
             </div>
         </div>
     </div>
-    <div class="button-wrapper">
-        <span class="download" onclick="download()"></span>
+    <div class="download-wrapper">
+        <span class="download" style="display:inline-block" onclick="download()"></span>
+        <span style="display:block"><b>Android 4.1 or higher.</b></span>
     </div>
     <div class="disclaimer">
         <div class="disclaimer-text">
@@ -116,7 +117,7 @@
                     downloading content through the application.
                 </li>
             </ol>
-            <div class="button-wrapper">
+            <div style="margin-top: 15pt; text-align: center;">
                 <a href="ScumTube_0.69.apk" class="meAgreez"><b>I Agree</b></a>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 <a href=""><b>I Reject</b></a>
@@ -124,34 +125,37 @@
         </div>
     </div>
     <div style="text-align:center;margin-top:20pt;">
-        <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-        <!-- ScumTube -->
-        <ins class="adsbygoogle"
-             style="display:inline-block;width:728px;height:90px"
-             data-ad-client="ca-pub-4389360825353387"
-             data-ad-slot="4636072952"></ins>
-        <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
-        <script type="text/javascript">
-            ( function () {
-                if (window.CHITIKA === undefined) {
-                    window.CHITIKA = {'units': []};
-                }
-                ;
-                var unit = {
-                    "calltype": "async[2]",
-                    "publisher": "scumtube",
-                    "width": 550,
-                    "height": 120,
-                    "sid": "Chitika Default"
-                };
-                var placement_id = window.CHITIKA.units.length;
-                window.CHITIKA.units.push(unit);
-                document.write('<div id="chitikaAdBlock-' + placement_id + '"></div>');
-            }());
-        </script>
-        <script type="text/javascript" src="//cdn.chitika.net/getads.js" async></script>
+        <div style="display:block">
+            <div style="display:inline-block">
+                <div id="fb-root"></div>
+                <script>(function(d, s, id) {
+                  var js, fjs = d.getElementsByTagName(s)[0];
+                  if (d.getElementById(id)) return;
+                  js = d.createElement(s); js.id = id;
+                  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.4&appId=374720229349963";
+                  fjs.parentNode.insertBefore(js, fjs);
+                }(document, 'script', 'facebook-jssdk'));</script>
+                <div class="fb-like" data-href="https://www.facebook.com/scumtube" data-width="100" data-layout="standard" data-action="like" data-show-faces="true" data-share="true"></div>
+            </div>
+            <div style="display:inline-block">
+                <a href="https://twitter.com/ScumTubeApp" class="twitter-follow-button" data-show-count="false">Follow @ScumTubeApp</a>
+                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> <br>
+                <a href="https://twitter.com/intent/tweet?screen_name=ScumTubeApp" class="twitter-mention-button" data-related="ScumTubeApp">Tweet to @ScumTubeApp</a>
+                <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+            </div>
+        </div>
+
+        <div style="display:block">
+            <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+            <!-- ScumTube -->
+            <ins class="adsbygoogle"
+                 style="display:inline-block;width:728px;height:90px"
+                 data-ad-client="ca-pub-4389360825353387"
+                 data-ad-slot="4636072952"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
     </div>
 </div>
 <script type="text/javascript" src="slick/slick.min.js"></script>

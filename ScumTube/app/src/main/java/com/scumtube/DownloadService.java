@@ -41,11 +41,7 @@ public class DownloadService extends AbstractService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(ScumTubeApplication.TAG, "On start command download invoked: " + intent);
-
-        final String title = intent.getStringExtra("title");
         final String ytUrl = intent.getStringExtra("ytUrl");
-        final String mp3Url = intent.getStringExtra("mp3Url");
-
         updateExternalStorageState();
 
         if (intent.getAction() != null) {
@@ -82,9 +78,11 @@ public class DownloadService extends AbstractService {
             }
         } else if (!externalStorageWriteable) {
             showToast("Can't write on the external storage.");
-        } else if (title != null && ytUrl != null && mp3Url != null) {
+        } else if (ytUrl != null) {
             if (!isAlreadyBeingDownloaded(ytUrl)) {
-                musicDownloadingArrayList.add(new MusicDownloading(new Music(title, ytUrl), currentNotificationId, mp3Url));
+                showToast("The download will start shortly.");
+                final MusicDownloading m = new MusicDownloading(ytUrl, currentNotificationId);
+                m.start();
                 currentNotificationId++;
             } else {
                 showToast("The music is already being downloaded.");
@@ -92,6 +90,8 @@ public class DownloadService extends AbstractService {
         } else {
             showToast("There was an error downloading the music. Try again.");
         }
+
+
         return START_NOT_STICKY;
     }
 
@@ -100,7 +100,7 @@ public class DownloadService extends AbstractService {
 
         final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
         if (m != null) {
-            Log.i(ScumTubeApplication.TAG, "Found exiting: " + m.getMusic().getTitle() + " :: " + " :: " + notificationId);
+            Log.i(ScumTubeApplication.TAG, "Found exiting: " + notificationId);
             musicDownloadingArrayList.remove(m);
             m.exit();
             return;
@@ -129,29 +129,70 @@ public class DownloadService extends AbstractService {
 
     public boolean isAlreadyBeingDownloaded(String ytUrl) {
         for (MusicDownloading m : musicDownloadingArrayList) {
-            if (m.getMusic().getYtUrl().equals(ytUrl)) {
+            if (m.getYtUrl().equals(ytUrl)) {
                 return true;
             }
         }
         return false;
     }
 
-    private class MusicDownloading {
-        private final Music music;
+    private class MusicDownloading extends Thread {
+        private Music music;
+
+        private final String ytUrl;
         private final int notificationId;
-        private final DownloadMp3 downloadingThread;
+        private final RequestMp3Task requestMp3Task;
+
+        private final Notification notification;
+        private DownloadMp3 downloadMp3;
         private boolean isDone = false;
         private String filePath;
 
-        public MusicDownloading(Music music, int notificationId, String mp3Url) {
-            this.music = music;
+        public MusicDownloading(String ytUrl, int notificationId) {
+            requestMp3Task = new RequestMp3Task(ScumTubeApplication.parseVideoId(ytUrl));
             this.notificationId = notificationId;
-            downloadingThread = new DownloadMp3(music.getTitle(), mp3Url, notificationId, createDownloadNotification(android.R.drawable.stat_sys_download));
-            downloadingThread.start();
+            this.ytUrl = ytUrl;
+            musicDownloadingArrayList.add(this);
+            notification = createDownloadNotification(android.R.drawable.stat_sys_download);
+        }
+
+        @Override
+        public void run() {
+            requestMp3Task.start();
+            try {
+                requestMp3Task.waitUntilFinished();
+            } catch (InterruptedException e) {
+                requestMp3Task.interrupt();
+                return;
+            }
+            if (requestMp3Task.needsUpdate()) {
+                showToast(requestMp3Task.getMessage());
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(browserIntent);
+                return;
+            } else if (requestMp3Task.hadSuccess()) {
+                music = new Music(requestMp3Task.getTitle(), ytUrl);
+                notification.contentView.setTextViewText(R.id.notification_download_textview, requestMp3Task.getTitle());
+                downloadMp3 = new DownloadMp3(requestMp3Task.getTitle(), requestMp3Task.getMp3Url(), notificationId);
+                if (this.isInterrupted()) {
+                    return;
+                }
+                downloadMp3.start();
+                return;
+            } else {
+                showToast(requestMp3Task.getMessage());
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e1) {
+                }
+                return;
+            }
+
         }
 
         public Notification createDownloadNotification(int icon) {
-            Log.i(ScumTubeApplication.TAG, "Creating download progress notification: " + music.getTitle());
+            Log.i(ScumTubeApplication.TAG, "Creating download progress notification");
 
             final Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
                     DownloadService.class);
@@ -181,7 +222,6 @@ public class DownloadService extends AbstractService {
 
         public RemoteViews createDownloadNotificationView() {
             RemoteViews downloadNotificationView = new RemoteViews(getPackageName(), R.layout.notification_download);
-            downloadNotificationView.setTextViewText(R.id.notification_download_textview, music.getTitle());
             return downloadNotificationView;
         }
 
@@ -211,13 +251,19 @@ public class DownloadService extends AbstractService {
         }
 
         public void exit() {
-            downloadingThread.interrupt();
+            if (requestMp3Task != null) {
+                requestMp3Task.interrupt();
+            }
+            if (downloadMp3 != null) {
+                downloadMp3.interrupt();
+            }
             final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             nm.cancel(notificationId);
+            this.interrupt();
         }
 
-        public DownloadMp3 getDownloadingThread() {
-            return downloadingThread;
+        public DownloadMp3 getDownloadMp3() {
+            return downloadMp3;
         }
 
         public Music getMusic() {
@@ -243,28 +289,31 @@ public class DownloadService extends AbstractService {
         public void setFilePath(String filePath) {
             this.filePath = filePath;
         }
+
+        public String getYtUrl() {
+            return ytUrl;
+        }
+
+        public Notification getNotification() {
+            return notification;
+        }
+
     }
 
     class DownloadMp3 extends Thread {
         private final String title;
         private final String mp3Url;
         private final int notificationId;
-        private final Notification notification;
         private int progress;
 
-        public DownloadMp3(String title, String mp3Url, int notificationId, Notification notification) {
+        public DownloadMp3(String title, String mp3Url, int notificationId) {
             this.title = title;
             this.mp3Url = mp3Url;
             this.notificationId = notificationId;
-            this.notification = notification;
         }
 
         public int getProgress() {
             return progress;
-        }
-
-        public Notification getNotification() {
-            return notification;
         }
 
         public int getNotificationId() {
@@ -347,7 +396,7 @@ public class DownloadService extends AbstractService {
             }
         }
 
-        private String addEscapeChars(String s){
+        private String addEscapeChars(String s) {
             String result = s.replaceAll("\\t", "");
             result = result.replaceAll("\\b", "");
             result = result.replaceAll("\\n", "");
@@ -367,13 +416,17 @@ public class DownloadService extends AbstractService {
         public void run() {
             while (!isInterrupted()) {
                 for (MusicDownloading m : musicDownloadingArrayList) {
-                    if (!isInterrupted() && !m.isDone()) {
-                        m.updateNotification(m.getDownloadingThread().getNotification(),
-                                m.getDownloadingThread().getNotificationId(),
-                                m.getDownloadingThread().getProgress());
-                    }
-                    if (m.getDownloadingThread().getProgress() == 100) {
-                        m.setIsDone(true);
+                    Log.i(ScumTubeApplication.TAG, "Check progress: " + m.getYtUrl());
+                    if(m.getDownloadMp3() != null) {
+                        if (!isInterrupted() && !m.isDone()) {
+                            m.updateNotification(m.getNotification(),
+                                    m.getNotificationId(),
+                                    m.getDownloadMp3().getProgress());
+
+                        }
+                        if (m.getDownloadMp3().getProgress() == 100) {
+                            m.setIsDone(true);
+                        }
                     }
                 }
                 try {
