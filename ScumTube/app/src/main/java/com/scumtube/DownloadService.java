@@ -397,7 +397,7 @@ public class DownloadService extends AbstractService {
         }
 
         private String removeEscapeChars(String s) {
-            String result = s.replaceAll("[^a-zA-Z_1-9\\s]", "");
+            String result = s.replaceAll("[^a-zA-Z_1-9\\s]", "_");
             return result;
         }
     }
