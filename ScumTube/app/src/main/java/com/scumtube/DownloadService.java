@@ -323,7 +323,7 @@ public class DownloadService extends AbstractService {
         @Override
         public void run() {
             try {
-                String titleEscaped = addEscapeChars(title);
+                String titleEscaped = removeEscapeChars(title);
                 Logger.i(ScumTubeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                 URL url = new URL(mp3Url);
                 URLConnection connection = url.openConnection();
@@ -396,16 +396,8 @@ public class DownloadService extends AbstractService {
             }
         }
 
-        private String addEscapeChars(String s) {
-            String result = s.replaceAll("\\t", "");
-            result = result.replaceAll("\\b", "");
-            result = result.replaceAll("\\n", "");
-            result = result.replaceAll("\\r", "");
-            result = result.replaceAll("\\f", "");
-            result = result.replaceAll("'", "");
-            result = result.replaceAll("\"", "");
-            result = result.replaceAll("\\\\", "");
-            result = result.replaceAll("/", "");
+        private String removeEscapeChars(String s) {
+            String result = s.replaceAll("[^a-zA-Z_1-9\\s]", "_");
             return result;
         }
     }
