@@ -63,6 +63,7 @@ public class ScumTubeApplication extends Application {
     }
 
     public static String parseVideoId(String url) {
+        //https://youtu.be/astSQRh1-i0
         String[] splittedUrl = url.split("/");
         return splittedUrl[3]; //splittedUrl[3] is the id of the video
     }

@@ -10,6 +10,7 @@ public class RestWrapper extends
 		Application {
 
 	private static final String VIDEO_URL = "/video_id/{video_id}";
+	private static final String PLAYLIST_URL = "/playlist_id/{playlist_id}";
 
 	private static final RestWrapper singleton = new RestWrapper();
 
@@ -74,6 +75,8 @@ public class RestWrapper extends
 		final Router router = new Router(getContext());
 
 		router.attach(VIDEO_URL, ServicesProvider.DownloadMP3.class);
+		router.attach(PLAYLIST_URL, ServicesProvider.Playlist.class);
+
 
 		return router;
 	}
@@ -115,6 +118,7 @@ public class RestWrapper extends
 		logInfo("");
 		logInfo("You can use this REST API by addressing the following GET/POST endpoints:");
 		logInfo(addrStr + VIDEO_URL);
+		logInfo(addrStr + PLAYLIST_URL);
 		logInfo("");
 	}
 
