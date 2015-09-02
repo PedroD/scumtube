@@ -1,7 +1,6 @@
 package com.scumtube;
 
 import android.app.Application;
-import android.os.Build;
 import android.widget.RemoteViews;
 
 import java.io.UnsupportedEncodingException;
@@ -18,6 +17,9 @@ public class ScumTubeApplication extends Application {
     public static final String PREFS_ISLOOPING = "isLooping";
     public static final String PREFS_MUSICLIST = "MusicList";
 
+    public static final String TYPE_PLAYLIST = "playlist";
+    public static final String TYPE_MUSIC = "music";
+
     public static RemoteViews mSmallNotificationView;
     public static RemoteViews mLargeNotificationView;
     public static RemoteViews mSmallLoadingNotificationView;
@@ -30,18 +32,7 @@ public class ScumTubeApplication extends Application {
 
         mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mLargeNotificationView = new RemoteViews(getPackageName(),
-                    R.layout.notification_large);
-        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            mSmallNotificationView = new RemoteViews(getPackageName(),
-                    R.layout.notification_small);
-        } else {
-            mSmallNotificationView = new RemoteViews(getPackageName(),
-                    R.layout.notification_small_compat);
-        }
     }
 
     public static String md5(String string) {
@@ -66,6 +57,12 @@ public class ScumTubeApplication extends Application {
         //https://youtu.be/astSQRh1-i0
         String[] splittedUrl = url.split("/");
         return splittedUrl[3]; //splittedUrl[3] is the id of the video
+    }
+
+    public static String parsePlaylistId(String url) {
+        //http://www.youtube.com/playlist?list=PLiAXHITvMgI_wAyCqda0LQXPRpAYOEd0Y
+        String[] splittedUrl = url.split("list=");
+        return splittedUrl[1]; //splittedUrl[3] is the id of the video
     }
 
 }

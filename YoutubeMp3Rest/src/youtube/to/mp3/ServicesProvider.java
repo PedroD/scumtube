@@ -256,9 +256,10 @@ public final class ServicesProvider {
 						final String getPlaylistIdsCmd = "youtube-dl "
 								+ "-j " 
 								+ "--flat-playlist " 
-								+ "http://www.youtube.com/playlist?list="
-								+ playlistId + " "
+								+ "\'http://www.youtube.com/playlist?list="
+								+ playlistId + "\' "
 								+ "| jq -r \'.id\' | sed \'s_^_https://youtu.be/_\'";
+						new Logger().log(Logger.LOG_INFO, "COMMAND: " + getPlaylistIdsCmd);
 						final ArrayList<String> getPlaylistIdsResult = executeCommand(getPlaylistIdsCmd);
 						boolean getPlaylistIdsSuccessfull = getPlaylistIdsResult.size() != 0 && !getPlaylistIdsResult.contains("error") ;
 						if (!getPlaylistIdsSuccessfull) {
@@ -288,7 +289,12 @@ public final class ServicesProvider {
 			private ArrayList<String> executeCommand(String command) {
 				ArrayList<String> output = new ArrayList<String>();
 				try {
-					Process p = Runtime.getRuntime().exec(command);
+					String[] cmd = {
+							"/bin/sh",
+							"-c",
+							command
+							};
+					Process p = Runtime.getRuntime().exec(cmd);
 					BufferedReader reader1 = new BufferedReader(new InputStreamReader(p.getInputStream()));
 					BufferedReader reader2 = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 					String line = "";
@@ -297,6 +303,7 @@ public final class ServicesProvider {
 					}
 					while ((line = reader2.readLine()) != null) {
 						output.add("error");
+						output.add(line);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

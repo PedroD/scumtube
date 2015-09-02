@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -105,6 +104,7 @@ public class HistoryActivity extends AbstractActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final Intent playerService = new Intent(getApplicationContext(), PlayerService.class);
                 playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
+                playerService.putExtra("type", ScumTubeApplication.TYPE_MUSIC);
                 startService(playerService);
                 sendHomeIntent();
             }
