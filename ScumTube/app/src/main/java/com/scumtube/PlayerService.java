@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
@@ -80,7 +81,19 @@ public class PlayerService extends AbstractService {
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                drawPlayPause();
+                if (mode.equals(MODE_NORMAL) && type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+                    drawPlayPause();
+                } else if (mode.equals(MODE_NORMAL) && type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+                    if(!playlist.isLastMusic()) {
+                        next();
+                    } else {
+                        drawPlayPause();
+                    }
+                } else if (mode.equals(MODE_LOOPALL)) {
+                    next();
+                } else if (mode.equals(MODE_SHUFFLE)) {
+                    shuffle();
+                }
             }
         });
     }
@@ -141,17 +154,41 @@ public class PlayerService extends AbstractService {
     }
 
     public void previous() {
-        final String previous = playlist.getPreviousMusic();
+        if (requestMp3 != null) {
+            Logger.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
+            requestMp3.interrupt();
+            requestMp3 = null;
+        }
+        pause();
+        playlist.changeToPreviousMusic();
+        final String previous = playlist.getCurrentMusic();
         requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(previous));
         requestMp3.start();
+        drawLoadingMusic();
     }
 
     public void next() {
-        Logger.i(ScumTubeApplication.TAG, "NEXT.");
-        final String next = playlist.getNextMusic();
+        if (requestMp3 != null) {
+            Logger.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
+            requestMp3.interrupt();
+            requestMp3 = null;
+        }
+        pause();
+        playlist.changeToNextMusic();
+        final String next = playlist.getCurrentMusic();
         requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(next));
         requestMp3.start();
+        drawLoadingMusic();
     }
+
+    public void shuffle() {
+        playlist.shuffle();
+        final String shuffle = playlist.getCurrentMusic();
+        requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(shuffle));
+        requestMp3.start();
+        drawLoadingMusic();
+    }
+
 
     public void start() {
         try {
@@ -168,7 +205,7 @@ public class PlayerService extends AbstractService {
         }
         mediaPlayer.start();
 
-        loadLoopPreferencesFromStorage();
+        loadMode();
 
         createNotification();
 
@@ -213,20 +250,24 @@ public class PlayerService extends AbstractService {
             mediaPlayer.reset();
             final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             nm.cancel(PLAYERSERVICE_NOTIFICATION_ID);
-            //stopSelf();
+            stopSelf();
         }
     }
 
     public void mode() {
-        if(mode.equals(MODE_NORMAL)){
+        if (mode.equals(MODE_NORMAL)) {
             mediaPlayer.setLooping(true);
             mode = MODE_LOOPONE;
-        } else if (mode.equals(MODE_LOOPONE)){
+        } else if (mode.equals(MODE_LOOPONE)) {
             mediaPlayer.setLooping(false);
-            mode = MODE_LOOPALL;
-        } else if (mode.equals(MODE_LOOPALL)){
+            if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+                mode = MODE_LOOPALL;
+            } else if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+                mode = MODE_NORMAL;
+            }
+        } else if (mode.equals(MODE_LOOPALL)) {
             mode = MODE_SHUFFLE;
-        } else if (mode.equals(MODE_SHUFFLE)){
+        } else if (mode.equals(MODE_SHUFFLE)) {
             mode = MODE_NORMAL;
         }
         drawMode();
@@ -281,13 +322,32 @@ public class PlayerService extends AbstractService {
 
             final NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.notify(PLAYERSERVICE_NOTIFICATION_ID, notification);
-            //startForeground(PLAYERSERVICE_NOTIFICATION_ID, notification);
+            startForeground(PLAYERSERVICE_NOTIFICATION_ID, notification);
         }
+    }
+
+    public void drawLoadingMusic(){
+        mSmallNotificationView
+                .setViewVisibility(R.id.marker_progress, View.VISIBLE);
+        mSmallNotificationView
+                .setViewVisibility(R.id.notification_small_imageview_playpause, View.GONE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mLargeNotificationView
+                    .setViewVisibility(R.id.notification_large_imageview_cover, View.GONE);
+            mLargeNotificationView
+                    .setViewVisibility(R.id.marker_progress, View.VISIBLE);
+            mLargeNotificationView.setTextViewText(R.id.notification_large_textview2, getResources().getString(R.string.loading));
+        }
+        updateNotification();
     }
 
     public void drawCover() {
         if (!requestMp3.isInterrupted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setViewVisibility(R.id.notification_large_imageview_cover, View.VISIBLE);
+                mLargeNotificationView
+                        .setViewVisibility(R.id.marker_progress, View.GONE);
                 mLargeNotificationView
                         .setImageViewBitmap(R.id.notification_large_imageview_cover,
                                 cover);
@@ -297,6 +357,12 @@ public class PlayerService extends AbstractService {
     }
 
     public void drawPlayPause() {
+        if(type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+            mSmallNotificationView
+                    .setViewVisibility(R.id.marker_progress, View.GONE);
+            mSmallNotificationView
+                    .setViewVisibility(R.id.notification_small_imageview_playpause, View.VISIBLE);
+        }
         if (mediaPlayer.isPlaying()) {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_playpause,
@@ -320,28 +386,43 @@ public class PlayerService extends AbstractService {
     }
 
     public void drawMode() {
-        if (mode.equals(MODE_NORMAL)){
+        if (mode.equals(MODE_NORMAL)) {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_mode,
-                            R.drawable.ic_player_loop_off_light);
+                            R.drawable.ic_player_mode_normal);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 mLargeNotificationView
                         .setImageViewResource(R.id.notification_large_imageview_mode,
-                                R.drawable.ic_player_loop_off_light);
+                                R.drawable.ic_player_mode_normal);
             }
         } else if (mode.equals(MODE_LOOPONE)) {
             mSmallNotificationView
                     .setImageViewResource(R.id.notification_small_imageview_mode,
-                            R.drawable.ic_player_loop_on_light);
+                            R.drawable.ic_player_mode_loopone);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                 mLargeNotificationView
                         .setImageViewResource(R.id.notification_large_imageview_mode,
-                                R.drawable.ic_player_loop_on_light);
+                                R.drawable.ic_player_mode_loopone);
             }
         } else if (mode.equals(MODE_LOOPALL)) {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_mode,
+                            R.drawable.ic_player_mode_loopall);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_mode,
+                                R.drawable.ic_player_mode_loopall);
+            }
 
-        } else if (mode.equals(MODE_SHUFFLE)){
-            
+        } else if (mode.equals(MODE_SHUFFLE)) {
+            mSmallNotificationView
+                    .setImageViewResource(R.id.notification_small_imageview_mode,
+                            R.drawable.ic_player_mode_shuffle);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                mLargeNotificationView
+                        .setImageViewResource(R.id.notification_large_imageview_mode,
+                                R.drawable.ic_player_mode_shuffle);
+            }
         }
         updateNotification();
     }
@@ -366,12 +447,12 @@ public class PlayerService extends AbstractService {
     public void createNotification() {
         synchronized (this) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+                if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
                     mLargeNotificationView = new RemoteViews(getPackageName(),
                             R.layout.notification_large_music);
                     mSmallNotificationView = new RemoteViews(getPackageName(),
                             R.layout.notification_small_music);
-                } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)){
+                } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
                     mLargeNotificationView = new RemoteViews(getPackageName(),
                             R.layout.notification_large_playlist);
                     mSmallNotificationView = new RemoteViews(getPackageName(),
@@ -401,10 +482,6 @@ public class PlayerService extends AbstractService {
             PendingIntent historyPendingIntent = PendingIntent.getActivity(PlayerService.this, 0, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT);
 
-            if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)){
-
-            }
-
             mSmallNotificationView
                     .setOnClickPendingIntent(R.id.notification_small_imageview_playpause,
                             playPausePendingIntent);
@@ -421,7 +498,7 @@ public class PlayerService extends AbstractService {
                     .setOnClickPendingIntent(R.id.notification_small_wrapper,
                             historyPendingIntent);
 
-            if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)){
+            if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
                 intent = new Intent(ACTION_PREVIOUS, null, PlayerService.this,
                         PlayerService.class);
                 PendingIntent previousPendingIntent = PendingIntent
@@ -495,9 +572,9 @@ public class PlayerService extends AbstractService {
 
     public void updateMusicList() {
         if (!requestMp3.isInterrupted()) {
-            if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+            if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
                 MusicList.addFirst(new Music(streamTitle, cover, ytUrl));
-            } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)){
+            } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
                 MusicList.addFirst(new Music(streamTitle, cover, playlist.getCurrentMusic()));
             }
             notifyHistoryActivity();
@@ -518,13 +595,24 @@ public class PlayerService extends AbstractService {
     public void saveMode() {
         SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean(ScumTubeApplication.PREFS_ISLOOPING, mediaPlayer.isLooping());
+        if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+            editor.putString(ScumTubeApplication.PREFS_MODE_MUSIC, mode);
+        } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+            editor.putString(ScumTubeApplication.PREFS_MODE_PLAYLIST, mode);
+        }
         editor.commit();
     }
 
-    public void loadLoopPreferencesFromStorage() {
+    public void loadMode() {
         SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
-        mediaPlayer.setLooping(preferences.getBoolean(ScumTubeApplication.PREFS_ISLOOPING, false));
+        if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+            mode = preferences.getString(ScumTubeApplication.PREFS_MODE_MUSIC, MODE_NORMAL);
+        } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+            mode = preferences.getString(ScumTubeApplication.PREFS_MODE_PLAYLIST, MODE_NORMAL);
+        }
+        if (mode.equals(MODE_LOOPONE)) {
+            mediaPlayer.setLooping(true);
+        }
     }
 
     private class AudioManagerListener implements AudioManager.OnAudioFocusChangeListener {

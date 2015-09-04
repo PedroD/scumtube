@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import java.io.BufferedInputStream;
@@ -210,7 +209,7 @@ public class DownloadService extends AbstractService {
                     DownloadService.this)
                     .setSmallIcon(icon).setContentTitle(ScumTubeApplication.APP_NAME)
                     .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
-                    .setContent(notificationView);
+                    .setContent(notificationView).setDeleteIntent(exitPendingIntent);
 
             final Notification notification = builder.build();
 
@@ -234,6 +233,7 @@ public class DownloadService extends AbstractService {
             } else {
                 Notification n = createDownloadNotification(android.R.drawable.stat_sys_download_done);
                 n.contentView.setProgressBar(R.id.notification_download_progressbar, 100, progress, false);
+                n.flags ^= Notification.FLAG_ONGOING_EVENT;
                 n.contentView.setTextViewText(
                         R.id.notification_download_textview_progress, progress + "% " + getString(R.string.download_done));
                 Intent intent = new Intent(ACTION_OPENMUSIC, null, DownloadService.this,

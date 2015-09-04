@@ -24,7 +24,7 @@
         android:background="@drawable/selectable_background_tomahawk"
         android:paddingBottom="@dimen/padding_large"
         android:paddingTop="@dimen/padding_large"
-        android:src="@drawable/ic_player_loop_off_light"/>
+        android:src="@drawable/ic_player_mode_normal"/>
 
     <ImageView
         android:id="@+id/notification_small_imageview_previous"
@@ -35,6 +35,14 @@
         android:paddingBottom="@dimen/padding_large"
         android:paddingTop="@dimen/padding_large"
         android:src="@drawable/ic_player_previous_light"/>
+
+    <ProgressBar android:indeterminate="true"
+                 android:layout_width="60dip"
+                 android:layout_height="60dip"
+                 android:id="@+id/marker_progress" style="?android:attr/progressBarStyle"
+                 android:layout_gravity="center_vertical|center_horizontal"
+                 android:visibility="gone"
+        />
 
     <ImageView
         android:id="@+id/notification_small_imageview_playpause"

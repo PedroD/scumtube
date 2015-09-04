@@ -14,7 +14,8 @@ public class ScumTubeApplication extends Application {
     public static final String _T = "91c85f899e56014969935fefd68830b9";
 
     public static final String PREFS_NAME = "scumtube_preferences";
-    public static final String PREFS_ISLOOPING = "isLooping";
+    public static final String PREFS_MODE_MUSIC = "mode_music";
+    public static final String PREFS_MODE_PLAYLIST = "mode_playlist";
     public static final String PREFS_MUSICLIST = "MusicList";
 
     public static final String TYPE_PLAYLIST = "playlist";
