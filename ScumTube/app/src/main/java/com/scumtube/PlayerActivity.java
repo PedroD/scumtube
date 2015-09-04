@@ -2,7 +2,6 @@ package com.scumtube;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
 
 
 public class PlayerActivity extends AbstractActivity {
@@ -23,10 +22,10 @@ public class PlayerActivity extends AbstractActivity {
                 playerService.putExtra("ytUrl", ytUrl);
                 startService(playerService);
             } else {
-                Toast.makeText(getApplicationContext(), "Error: Wrong URL (" + ytUrl + ")!", Toast.LENGTH_LONG).show();
+                showToast("Error: Wrong URL (" + ytUrl + ")!");
             }
         } else {
-            Toast.makeText(getApplicationContext(), "An error occurred!", Toast.LENGTH_LONG).show();
+            showToast("An error occurred!");
         }
         moveTaskToBack(true);
         finish();

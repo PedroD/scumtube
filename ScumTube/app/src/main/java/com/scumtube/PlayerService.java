@@ -84,7 +84,7 @@ public class PlayerService extends AbstractService {
                 if (mode.equals(MODE_NORMAL) && type.equals(ScumTubeApplication.TYPE_MUSIC)) {
                     drawPlayPause();
                 } else if (mode.equals(MODE_NORMAL) && type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
-                    if(!playlist.isLastMusic()) {
+                    if (!playlist.isLastMusic()) {
                         next();
                     } else {
                         drawPlayPause();
@@ -326,7 +326,7 @@ public class PlayerService extends AbstractService {
         }
     }
 
-    public void drawLoadingMusic(){
+    public void drawLoadingMusic() {
         mSmallNotificationView
                 .setViewVisibility(R.id.marker_progress, View.VISIBLE);
         mSmallNotificationView
@@ -357,7 +357,7 @@ public class PlayerService extends AbstractService {
     }
 
     public void drawPlayPause() {
-        if(type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+        if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
             mSmallNotificationView
                     .setViewVisibility(R.id.marker_progress, View.GONE);
             mSmallNotificationView
@@ -595,7 +595,7 @@ public class PlayerService extends AbstractService {
     public void saveMode() {
         SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
         SharedPreferences.Editor editor = preferences.edit();
-        if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+        if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
             editor.putString(ScumTubeApplication.PREFS_MODE_MUSIC, mode);
         } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
             editor.putString(ScumTubeApplication.PREFS_MODE_PLAYLIST, mode);
@@ -605,7 +605,7 @@ public class PlayerService extends AbstractService {
 
     public void loadMode() {
         SharedPreferences preferences = getSharedPreferences(ScumTubeApplication.PREFS_NAME, 0);
-        if(type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+        if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
             mode = preferences.getString(ScumTubeApplication.PREFS_MODE_MUSIC, MODE_NORMAL);
         } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
             mode = preferences.getString(ScumTubeApplication.PREFS_MODE_PLAYLIST, MODE_NORMAL);

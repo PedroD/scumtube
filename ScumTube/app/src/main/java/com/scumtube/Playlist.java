@@ -10,7 +10,7 @@ public class Playlist {
     private ArrayList<String> videoIds;
     private int currentMusic = 0;
 
-    public Playlist(ArrayList<String> videoIds){
+    public Playlist(ArrayList<String> videoIds) {
         this.videoIds = videoIds;
     }
 
@@ -22,16 +22,16 @@ public class Playlist {
         return videoIds.get(currentMusic);
     }
 
-    public void changeToNextMusic(){
+    public void changeToNextMusic() {
         currentMusic = getNextMusicIndex();
     }
 
-    public void changeToPreviousMusic(){
+    public void changeToPreviousMusic() {
         currentMusic = getPreviousMusicIndex();
     }
 
     private int getPreviousMusicIndex() {
-        if(isFirstMusic()){
+        if (isFirstMusic()) {
             return videoIds.size() - 1;
         } else {
             return (currentMusic - 1) % videoIds.size();
@@ -42,17 +42,21 @@ public class Playlist {
         return (currentMusic + 1) % videoIds.size();
     }
 
-    public boolean isFirstMusic(){
+    public boolean isFirstMusic() {
         return currentMusic == 0;
     }
 
-    public boolean isLastMusic(){
+    public boolean isLastMusic() {
         return currentMusic == (videoIds.size() - 1);
     }
 
-    public void shuffle(){
+    public void shuffle() {
         Random rand = new Random();
-        currentMusic = rand.nextInt(videoIds.size());
+        int i;
+        do {
+            i = rand.nextInt(videoIds.size());
+        } while (i == currentMusic);
+        currentMusic = i;
     }
 
 

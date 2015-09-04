@@ -2,7 +2,6 @@ package com.scumtube;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
 
 public class DownloadActivity extends AbstractActivity {
 
@@ -12,15 +11,22 @@ public class DownloadActivity extends AbstractActivity {
         if (getIntent().getExtras() != null) {
             final Bundle extras = getIntent().getExtras();
             final String ytUrl = extras.getString(Intent.EXTRA_TEXT);
+
             if (ytUrl != null && ytUrl.contains("http")) {
                 final Intent downloadService = new Intent(this, DownloadService.class);
+                if (ytUrl.contains("list")) {
+                    showToast("ScumTube doesn't support playlist download yet.");
+                    moveTaskToBack(true);
+                    finish();
+                    return;
+                }
                 downloadService.putExtra("ytUrl", ytUrl);
                 startService(downloadService);
             } else {
-                Toast.makeText(getApplicationContext(), "Error: Wrong URL (" + ytUrl + ")!", Toast.LENGTH_LONG).show();
+                showToast("Error: Wrong URL (" + ytUrl + ")!");
             }
         } else {
-            Toast.makeText(getApplicationContext(), "An error occurred!", Toast.LENGTH_LONG).show();
+            showToast("An error occurred!");
         }
         moveTaskToBack(true);
         finish();
