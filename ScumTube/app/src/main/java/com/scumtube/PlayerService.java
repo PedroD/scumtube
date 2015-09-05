@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.scumtube.ScumTubeApplication.TYPE_PLAYLIST;
 import static com.scumtube.ScumTubeApplication.mLargeNotificationView;
 import static com.scumtube.ScumTubeApplication.mSmallLoadingNotificationView;
 import static com.scumtube.ScumTubeApplication.mSmallNotificationView;
@@ -63,6 +64,7 @@ public class PlayerService extends AbstractService {
     private Thread requestMp3 = null;
     private Thread requestPlaylist = null;
     private Object canExitLock = new ReentrantLock();
+    private Object canUpdateMusicList = new ReentrantLock();
     private String mode = MODE_NORMAL;
 
     public PlayerService() {
@@ -92,7 +94,7 @@ public class PlayerService extends AbstractService {
                 } else if (mode.equals(MODE_LOOPALL)) {
                     next();
                 } else if (mode.equals(MODE_SHUFFLE)) {
-                    shuffle();
+                    next();
                 }
             }
         });
@@ -153,7 +155,46 @@ public class PlayerService extends AbstractService {
         return START_NOT_STICKY;
     }
 
+    private class ChangeMusicThread extends Thread {
+        private final Runnable runnable;
+
+        public ChangeMusicThread(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(1000);
+                if (!this.isInterrupted())
+                    runnable.run();
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private ChangeMusicThread changeMusicThread = null;
+
+    public void requestCurrent() {
+        if (changeMusicThread != null) {
+            changeMusicThread.interrupt();
+        }
+        changeMusicThread = new ChangeMusicThread(new Runnable() {
+            @Override
+            public void run() {
+                requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(playlist.getCurrentMusicId()));
+                requestMp3.start();
+                new RequestMp3Task(ScumTubeApplication.parseVideoId(playlist.getNextMusicId())).start();
+                if (!mode.equals(MODE_SHUFFLE)) {
+                    new RequestMp3Task(ScumTubeApplication.parseVideoId(playlist.getPreviousMusicId())).start();
+                }
+            }
+        });
+        changeMusicThread.start();
+    }
+
     public void previous() {
+        drawLoadingMusic();
         if (requestMp3 != null) {
             Logger.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
             requestMp3.interrupt();
@@ -161,13 +202,11 @@ public class PlayerService extends AbstractService {
         }
         pause();
         playlist.changeToPreviousMusic();
-        final String previous = playlist.getCurrentMusic();
-        requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(previous));
-        requestMp3.start();
-        drawLoadingMusic();
+        requestCurrent();
     }
 
     public void next() {
+        drawLoadingMusic();
         if (requestMp3 != null) {
             Logger.i(ScumTubeApplication.TAG, "Killing previous download requestMp3Task.");
             requestMp3.interrupt();
@@ -175,20 +214,8 @@ public class PlayerService extends AbstractService {
         }
         pause();
         playlist.changeToNextMusic();
-        final String next = playlist.getCurrentMusic();
-        requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(next));
-        requestMp3.start();
-        drawLoadingMusic();
+        requestCurrent();
     }
-
-    public void shuffle() {
-        playlist.shuffle();
-        final String shuffle = playlist.getCurrentMusic();
-        requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(shuffle));
-        requestMp3.start();
-        drawLoadingMusic();
-    }
-
 
     public void start() {
         try {
@@ -256,6 +283,9 @@ public class PlayerService extends AbstractService {
 
     public void mode() {
         if (mode.equals(MODE_NORMAL)) {
+            if(type.equals(TYPE_PLAYLIST)) {
+                playlist.setShuffle(false);
+            }
             mediaPlayer.setLooping(true);
             mode = MODE_LOOPONE;
         } else if (mode.equals(MODE_LOOPONE)) {
@@ -268,6 +298,7 @@ public class PlayerService extends AbstractService {
         } else if (mode.equals(MODE_LOOPALL)) {
             mode = MODE_SHUFFLE;
         } else if (mode.equals(MODE_SHUFFLE)) {
+            playlist.setShuffle(true);
             mode = MODE_NORMAL;
         }
         drawMode();
@@ -296,7 +327,7 @@ public class PlayerService extends AbstractService {
         if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
             downloadIntent.putExtra("ytUrl", ytUrl);
         } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
-            downloadIntent.putExtra("ytUrl", playlist.getCurrentMusic());
+            downloadIntent.putExtra("ytUrl", playlist.getCurrentMusicId());
         }
         startService(downloadIntent);
     }
@@ -571,14 +602,16 @@ public class PlayerService extends AbstractService {
     }
 
     public void updateMusicList() {
-        if (!requestMp3.isInterrupted()) {
-            if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
-                MusicList.addFirst(new Music(streamTitle, cover, ytUrl));
-            } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
-                MusicList.addFirst(new Music(streamTitle, cover, playlist.getCurrentMusic()));
+        synchronized (canUpdateMusicList) {
+            if (!requestMp3.isInterrupted()) {
+                if (type.equals(ScumTubeApplication.TYPE_MUSIC)) {
+                    MusicList.addFirst(new Music(streamTitle, cover, ytUrl));
+                } else if (type.equals(ScumTubeApplication.TYPE_PLAYLIST)) {
+                    MusicList.addFirst(new Music(streamTitle, cover, playlist.getCurrentMusicId()));
+                }
+                notifyHistoryActivity();
+                MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
             }
-            notifyHistoryActivity();
-            MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
         }
     }
 
@@ -612,6 +645,8 @@ public class PlayerService extends AbstractService {
         }
         if (mode.equals(MODE_LOOPONE)) {
             mediaPlayer.setLooping(true);
+        } else if (mode.equals(MODE_SHUFFLE)) {
+            playlist.setShuffle(true);
         }
     }
 
@@ -752,8 +787,7 @@ public class PlayerService extends AbstractService {
                     return;
                 }
                 synchronized (canExitLock) {
-                    requestMp3 = new RequestMp3(ScumTubeApplication.parseVideoId(playlist.getCurrentMusic()));
-                    requestMp3.start();
+                    requestCurrent();
                 }
 
                 return;

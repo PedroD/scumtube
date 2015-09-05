@@ -11,7 +11,7 @@ public class ScumTubeApplication extends Application {
 
     public static final String APP_NAME = "ScumTube";
     public static final String TAG = "ScumTubeLog";
-    public static final String _T = "91c85f899e56014969935fefd68830b9";
+    public static final String _T = "57eeec0a6974ecb4e9fcf68fab052f7b";
 
     public static final String PREFS_NAME = "scumtube_preferences";
     public static final String PREFS_MODE_MUSIC = "mode_music";

@@ -9,25 +9,29 @@ import java.util.Random;
 public class Playlist {
     private ArrayList<String> videoIds;
     private int currentMusic = 0;
+    private int randomNext = 0;
+    private boolean shuffle = false;
 
     public Playlist(ArrayList<String> videoIds) {
         this.videoIds = videoIds;
     }
 
-    public String getCurrentMusic() {
-        int previous = getPreviousMusicIndex();
-        int next = getNextMusicIndex();
-        new RequestMp3Task(ScumTubeApplication.parseVideoId(videoIds.get(previous))).start();
-        new RequestMp3Task(ScumTubeApplication.parseVideoId(videoIds.get(next))).start();
+    public String getCurrentMusicId() {
         return videoIds.get(currentMusic);
     }
 
     public void changeToNextMusic() {
-        currentMusic = getNextMusicIndex();
+        if (!this.shuffle)
+            currentMusic = getNextMusicIndex();
+        else
+            shuffle();
     }
 
     public void changeToPreviousMusic() {
-        currentMusic = getPreviousMusicIndex();
+        if (!this.shuffle)
+            currentMusic = getPreviousMusicIndex();
+        else
+            shuffle();
     }
 
     private int getPreviousMusicIndex() {
@@ -50,13 +54,34 @@ public class Playlist {
         return currentMusic == (videoIds.size() - 1);
     }
 
-    public void shuffle() {
+    private void shuffle() {
         Random rand = new Random();
         int i;
         do {
             i = rand.nextInt(videoIds.size());
-        } while (i == currentMusic);
-        currentMusic = i;
+        } while (i == randomNext);
+        currentMusic = randomNext;
+        randomNext = i;
+    }
+
+    public void setShuffle(boolean enabled) {
+        if (!this.shuffle && enabled)
+            shuffle();
+        this.shuffle = enabled;
+    }
+
+    public String getPreviousMusicId() {
+        if (!this.shuffle)
+            return videoIds.get(getPreviousMusicIndex());
+        else
+            return videoIds.get(randomNext);
+    }
+
+    public String getNextMusicId() {
+        if (!this.shuffle)
+            return videoIds.get(getNextMusicIndex());
+        else
+            return videoIds.get(randomNext);
     }
 
 
