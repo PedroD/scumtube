@@ -72,7 +72,7 @@ public class MusicList {
                 e.printStackTrace();
             }
         }
-        editor.putString(ScumTubeApplication.PREFS_MUSICLIST, musicJsonArray.toString());
+        editor.putString(SoundtapeApplication.PREFS_MUSICLIST, musicJsonArray.toString());
         editor.commit();
     }
 
@@ -88,7 +88,7 @@ public class MusicList {
     public static void loadMusicList(SharedPreferences sharedPreferences) {
         if (MusicList.getMusicArrayList().isEmpty()) {
             SharedPreferences preferences = sharedPreferences;
-            String musicJsonArrayString = preferences.getString(ScumTubeApplication.PREFS_MUSICLIST, null);
+            String musicJsonArrayString = preferences.getString(SoundtapeApplication.PREFS_MUSICLIST, null);
             if (musicJsonArrayString != null) {
                 try {
                     JSONArray musicJsonArray = new JSONArray(musicJsonArrayString);

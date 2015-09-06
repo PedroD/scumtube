@@ -15,9 +15,9 @@ public class PlayerActivity extends AbstractActivity {
             if (ytUrl != null && ytUrl.contains("http")) {
                 final Intent playerService = new Intent(this, PlayerService.class);
                 if(ytUrl.contains("list")){
-                    playerService.putExtra("type", ScumTubeApplication.TYPE_PLAYLIST);
+                    playerService.putExtra("type", SoundtapeApplication.TYPE_PLAYLIST);
                 } else {
-                    playerService.putExtra("type", ScumTubeApplication.TYPE_MUSIC);
+                    playerService.putExtra("type", SoundtapeApplication.TYPE_MUSIC);
                 }
                 playerService.putExtra("ytUrl", ytUrl);
                 startService(playerService);

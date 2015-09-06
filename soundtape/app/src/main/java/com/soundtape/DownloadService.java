@@ -25,8 +25,8 @@ public class DownloadService extends AbstractService {
 
     private int currentNotificationId = 2;
 
-    private final String ACTION_EXIT = "com.scumtube.ACTION_EXIT";
-    private final String ACTION_OPENMUSIC = "com.scumtube.ACTION_OPENMUSIC";
+    private final String ACTION_EXIT = "com.soundtape.ACTION_EXIT";
+    private final String ACTION_OPENMUSIC = "com.soundtape.ACTION_OPENMUSIC";
 
     private ArrayList<MusicDownloading> musicDownloadingArrayList = new ArrayList<MusicDownloading>();
     private CheckProgress checkProgress;
@@ -39,7 +39,7 @@ public class DownloadService extends AbstractService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Logger.i(ScumTubeApplication.TAG, "On start command download invoked: " + intent);
+        Logger.i(SoundtapeApplication.TAG, "On start command download invoked: " + intent);
         final String ytUrl = intent.getStringExtra("ytUrl");
         updateExternalStorageState();
 
@@ -95,11 +95,11 @@ public class DownloadService extends AbstractService {
     }
 
     private void exit(int notificationId) {
-        Logger.i(ScumTubeApplication.TAG, "Exiting: " + notificationId);
+        Logger.i(SoundtapeApplication.TAG, "Exiting: " + notificationId);
 
         final MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
         if (m != null) {
-            Logger.i(ScumTubeApplication.TAG, "Found exiting: " + notificationId);
+            Logger.i(SoundtapeApplication.TAG, "Found exiting: " + notificationId);
             musicDownloadingArrayList.remove(m);
             m.exit();
             return;
@@ -148,7 +148,7 @@ public class DownloadService extends AbstractService {
         private String filePath;
 
         public MusicDownloading(String ytUrl, int notificationId) {
-            requestMp3Task = new RequestMp3Task(ScumTubeApplication.parseVideoId(ytUrl));
+            requestMp3Task = new RequestMp3Task(SoundtapeApplication.parseVideoId(ytUrl));
             this.notificationId = notificationId;
             this.ytUrl = ytUrl;
             musicDownloadingArrayList.add(this);
@@ -191,7 +191,7 @@ public class DownloadService extends AbstractService {
         }
 
         public Notification createDownloadNotification(int icon) {
-            Logger.i(ScumTubeApplication.TAG, "Creating download progress notification");
+            Logger.i(SoundtapeApplication.TAG, "Creating download progress notification");
 
             final Intent intent = new Intent(ACTION_EXIT, null, DownloadService.this,
                     DownloadService.class);
@@ -207,7 +207,7 @@ public class DownloadService extends AbstractService {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(
                     DownloadService.this)
-                    .setSmallIcon(icon).setContentTitle(ScumTubeApplication.APP_NAME)
+                    .setSmallIcon(icon).setContentTitle(SoundtapeApplication.APP_NAME)
                     .setOngoing(true).setPriority(NotificationCompat.PRIORITY_MAX)
                     .setContent(notificationView).setDeleteIntent(exitPendingIntent);
 
@@ -324,7 +324,7 @@ public class DownloadService extends AbstractService {
         public void run() {
             try {
                 String titleEscaped = removeEscapeChars(title);
-                Logger.i(ScumTubeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                Logger.i(SoundtapeApplication.TAG, "Started the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                 URL url = new URL(mp3Url);
                 URLConnection connection = url.openConnection();
                 connection.connect();
@@ -332,13 +332,13 @@ public class DownloadService extends AbstractService {
                 int fileLength = connection.getContentLength();
 
                 if (isInterrupted()) {
-                    Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                    Logger.i(SoundtapeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     return;
                 }
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                String directoryPath = Environment.getExternalStorageDirectory() + "/ScumTube/";
+                String directoryPath = Environment.getExternalStorageDirectory() + "/soundtape/";
                 File directory = new File(directoryPath);
                 if (!directory.exists()) {
                     directory.mkdir();
@@ -346,7 +346,7 @@ public class DownloadService extends AbstractService {
 
                 String filePath = directoryPath + titleEscaped + ".mp3";
 
-                Logger.i(ScumTubeApplication.TAG, "Output directory: " + filePath);
+                Logger.i(SoundtapeApplication.TAG, "Output directory: " + filePath);
 
 
                 File file;
@@ -356,7 +356,7 @@ public class DownloadService extends AbstractService {
                     if (!file.exists()) {
                         break;
                     }
-                    Logger.i(ScumTubeApplication.TAG, "The file already exists: " + filePath);
+                    Logger.i(SoundtapeApplication.TAG, "The file already exists: " + filePath);
                     filePath = directoryPath + titleEscaped + "(" + i + ")" + ".mp3";
                     i++;
                 }
@@ -364,7 +364,7 @@ public class DownloadService extends AbstractService {
                 OutputStream output = new FileOutputStream(filePath);
 
                 if (isInterrupted()) {
-                    Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                    Logger.i(SoundtapeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                     output.close();
                     input.close();
                     return;
@@ -378,7 +378,7 @@ public class DownloadService extends AbstractService {
                     progress = (int) (total * 100 / fileLength);
                     output.write(data, 0, count);
                     if (isInterrupted()) {
-                        Logger.i(ScumTubeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                        Logger.i(SoundtapeApplication.TAG, "Interrupted the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
                         output.close();
                         input.close();
                         new File(filePath).delete();
@@ -390,7 +390,7 @@ public class DownloadService extends AbstractService {
                 input.close();
                 MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
                 m.setFilePath(filePath);
-                Logger.i(ScumTubeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
+                Logger.i(SoundtapeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -408,7 +408,7 @@ public class DownloadService extends AbstractService {
         public void run() {
             while (!isInterrupted()) {
                 for (MusicDownloading m : musicDownloadingArrayList) {
-                    Logger.i(ScumTubeApplication.TAG, "Check progress: " + m.getYtUrl());
+                    Logger.i(SoundtapeApplication.TAG, "Check progress: " + m.getYtUrl());
                     if(m.getDownloadMp3() != null) {
                         if (!isInterrupted() && !m.isDone()) {
                             m.updateNotification(m.getNotification(),

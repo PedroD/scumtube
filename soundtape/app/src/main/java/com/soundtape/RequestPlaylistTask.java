@@ -37,7 +37,7 @@ public class RequestPlaylistTask extends Thread {
         String requestUrl = "http://176.111.109.23:9194/playlist_id/" + playlistId;
         HttpClient httpClient = new DefaultHttpClient();
         HttpGet httpGet = new HttpGet(requestUrl);
-        Logger.i(ScumTubeApplication.TAG, "Requesting playlist " + requestUrl);
+        Logger.i(SoundtapeApplication.TAG, "Requesting playlist " + requestUrl);
         try {
             JSONObject jsonObject;
             while (!this.isInterrupted()) {
@@ -58,7 +58,7 @@ public class RequestPlaylistTask extends Thread {
                     bufferedReader.close();
 
                     if (this.isInterrupted()) {
-                        Logger.w(ScumTubeApplication.TAG, "Download task interrupted");
+                        Logger.w(SoundtapeApplication.TAG, "Download task interrupted");
                         return;
                     }
 
@@ -68,16 +68,16 @@ public class RequestPlaylistTask extends Thread {
                          */
                     if (jsonObject.has("version")) {
                         final String v = jsonObject.getString("version");
-                        final String d = ScumTubeApplication.md5(v);
-                        if (!ScumTubeApplication._T.equals(d)) {
-                            message = "A new version of ScumTube was released! You need to update.";
+                        final String d = SoundtapeApplication.md5(v);
+                        if (!SoundtapeApplication._T.equals(d)) {
+                            message = "A new version of soundtape was released! You need to update.";
                             needsUpdate = true;
                             hasFinished.release();
                             return;
                         }
                     }
                     if (jsonObject.has("ready")) {
-                        Logger.i(ScumTubeApplication.TAG, "ready");
+                        Logger.i(SoundtapeApplication.TAG, "ready");
                         final JSONArray videoIdsJsonArray = jsonObject.getJSONArray("ids");
                         if (videoIdsJsonArray != null) {
                             for (int i=0;i<videoIdsJsonArray.length();i++){
@@ -92,22 +92,22 @@ public class RequestPlaylistTask extends Thread {
                         final String errorMsg = jsonObject.getString("error");
                         throw new Exception(errorMsg);
                     }
-                    Logger.i(ScumTubeApplication.TAG, jsonObject.getString("scheduled"));
+                    Logger.i(SoundtapeApplication.TAG, jsonObject.getString("scheduled"));
                     Thread.sleep(1000);
                 }
             }
             if (this.isInterrupted()) {
-                Logger.w(ScumTubeApplication.TAG, "Requesting playlist task interrupted.");
+                Logger.w(SoundtapeApplication.TAG, "Requesting playlist task interrupted.");
                 hasFinished.release();
                 return;
             }
         } catch (InterruptedException e) {
-            Logger.w(ScumTubeApplication.TAG, "Requesting playlist interrupted.");
+            Logger.w(SoundtapeApplication.TAG, "Requesting playlist interrupted.");
             hasFinished.release();
             return;
         } catch (Exception e) {
             e.printStackTrace();
-            Logger.e(ScumTubeApplication.TAG, e.getClass().getName(), e);
+            Logger.e(SoundtapeApplication.TAG, e.getClass().getName(), e);
             message = "There was a problem contacting YouTube. Please check your Internet connection.";
             hasFinished.release();
             return;

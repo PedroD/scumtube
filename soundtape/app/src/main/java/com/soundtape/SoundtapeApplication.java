@@ -7,13 +7,13 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class ScumTubeApplication extends Application {
+public class SoundtapeApplication extends Application {
 
-    public static final String APP_NAME = "ScumTube";
-    public static final String TAG = "ScumTubeLog";
+    public static final String APP_NAME = "soundtape";
+    public static final String TAG = "soundtapeLog";
     public static final String _T = "57eeec0a6974ecb4e9fcf68fab052f7b";
 
-    public static final String PREFS_NAME = "scumtube_preferences";
+    public static final String PREFS_NAME = "soundtape_preferences";
     public static final String PREFS_MODE_MUSIC = "mode_music";
     public static final String PREFS_MODE_PLAYLIST = "mode_playlist";
     public static final String PREFS_MUSICLIST = "MusicList";

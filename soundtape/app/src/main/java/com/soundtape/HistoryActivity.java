@@ -83,18 +83,18 @@ public class HistoryActivity extends AbstractActivity {
             final Bundle extras = intent.getExtras();
             final String extraText = extras.getString(Intent.EXTRA_TEXT);
             if (extraText != null && extraText.equals(PlayerService.EXTRA_DATASETCHANGED)) {
-                Logger.i(ScumTubeApplication.TAG, "Intent");
+                Logger.i(SoundtapeApplication.TAG, "Intent");
                 adapter.notifyDataSetChanged();
             }
         } else {
-            Logger.i(ScumTubeApplication.TAG, "getView");
+            Logger.i(SoundtapeApplication.TAG, "getView");
             getView();
         }
     }
 
 
     public void getView() {
-        MusicList.loadMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
+        MusicList.loadMusicList(getSharedPreferences(SoundtapeApplication.PREFS_NAME, Context.MODE_PRIVATE));
 
         createAdapter();
 
@@ -104,7 +104,7 @@ public class HistoryActivity extends AbstractActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final Intent playerService = new Intent(getApplicationContext(), PlayerService.class);
                 playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
-                playerService.putExtra("type", ScumTubeApplication.TYPE_MUSIC);
+                playerService.putExtra("type", SoundtapeApplication.TYPE_MUSIC);
                 startService(playerService);
                 sendHomeIntent();
             }
@@ -140,7 +140,7 @@ public class HistoryActivity extends AbstractActivity {
     }
 
     public void saveMusicList() {
-        MusicList.saveMusicList(getSharedPreferences(ScumTubeApplication.PREFS_NAME, Context.MODE_PRIVATE));
+        MusicList.saveMusicList(getSharedPreferences(SoundtapeApplication.PREFS_NAME, Context.MODE_PRIVATE));
     }
 
     public void createAdapter() {
@@ -157,7 +157,7 @@ public class HistoryActivity extends AbstractActivity {
     @Override
     public void onResume() {
         super.onResume();
-        Logger.i(ScumTubeApplication.TAG, "onResume");
+        Logger.i(SoundtapeApplication.TAG, "onResume");
         if (!hasView) {
             getView();
         }

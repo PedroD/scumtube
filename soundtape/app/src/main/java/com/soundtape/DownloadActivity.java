@@ -15,7 +15,7 @@ public class DownloadActivity extends AbstractActivity {
             if (ytUrl != null && ytUrl.contains("http")) {
                 final Intent downloadService = new Intent(this, DownloadService.class);
                 if (ytUrl.contains("list")) {
-                    showToast("ScumTube doesn't support playlist download yet.");
+                    showToast("soundtape doesn't support playlist download yet.");
                     moveTaskToBack(true);
                     finish();
                     return;
