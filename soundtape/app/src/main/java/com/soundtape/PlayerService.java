@@ -711,12 +711,13 @@ public class PlayerService extends AbstractService {
             }
             if (requestMp3Task.needsUpdate()) {
                 showToast(requestMp3Task.getMessage());
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                /*Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(browserIntent);
                 PlayerService.this.exit();
-                return;
-            } else if (requestMp3Task.hadSuccess()) {
+                return;*/
+            }
+			if (requestMp3Task.hadSuccess()) {
                 streamTitle = requestMp3Task.getTitle();
                 streamCoverUrl = requestMp3Task.getCoverUrl();
                 streamMp3Url = requestMp3Task.getMp3Url();
@@ -775,12 +776,13 @@ public class PlayerService extends AbstractService {
             }
             if (requestPlaylistTask.needsUpdate()) {
                 showToast(requestPlaylistTask.getMessage());
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                /*Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(browserIntent);
                 PlayerService.this.exit();
-                return;
-            } else if (requestPlaylistTask.hadSuccess()) {
+                return;*/
+            }
+			if (requestPlaylistTask.hadSuccess()) {
                 final ArrayList<String> videoIds = requestPlaylistTask.getVideoIds();
                 playlist = new Playlist(videoIds);
                 if (this.isInterrupted()) {

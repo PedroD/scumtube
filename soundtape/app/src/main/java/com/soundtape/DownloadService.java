@@ -166,11 +166,12 @@ public class DownloadService extends AbstractService {
             }
             if (requestMp3Task.needsUpdate()) {
                 showToast(requestMp3Task.getMessage());
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
+                /*Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.scumtube.com"));
                 browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(browserIntent);
-                return;
-            } else if (requestMp3Task.hadSuccess()) {
+                return;*/
+            }
+			if (requestMp3Task.hadSuccess()) {
                 music = new Music(requestMp3Task.getTitle(), ytUrl);
                 notification.contentView.setTextViewText(R.id.notification_download_textview, requestMp3Task.getTitle());
                 downloadMp3 = new DownloadMp3(requestMp3Task.getTitle(), requestMp3Task.getMp3Url(), notificationId);
