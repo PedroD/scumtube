@@ -1,6 +1,9 @@
 package com.soundtape;
 
 import android.app.Application;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Parcelable;
 import android.widget.RemoteViews;
 
 import java.io.UnsupportedEncodingException;
@@ -17,6 +20,8 @@ public class SoundtapeApplication extends Application {
     public static final String PREFS_MODE_MUSIC = "mode_music";
     public static final String PREFS_MODE_PLAYLIST = "mode_playlist";
     public static final String PREFS_MUSICLIST = "MusicList";
+    public static final String PREFS_HASCREATEDICON = "hasCreatedIcon";
+
 
     public static final String TYPE_PLAYLIST = "playlist";
     public static final String TYPE_MUSIC = "music";
@@ -24,6 +29,8 @@ public class SoundtapeApplication extends Application {
     public static RemoteViews mSmallNotificationView;
     public static RemoteViews mLargeNotificationView;
     public static RemoteViews mSmallLoadingNotificationView;
+
+    private boolean hasCreatedIcon;
 
     @Override
     public void onCreate() {
@@ -33,6 +40,31 @@ public class SoundtapeApplication extends Application {
 
         mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading);
 
+        loadhasCreatedIcon();
+
+        if(!hasCreatedIcon) {
+            Intent shortcutintent = new Intent("com.android.launcher.action.INSTALL_SHORTCUT");
+            shortcutintent.putExtra("duplicate", false);
+            shortcutintent.putExtra(Intent.EXTRA_SHORTCUT_NAME, getString(R.string.history_activity));
+            Parcelable icon = Intent.ShortcutIconResource.fromContext(getApplicationContext(), R.drawable.soundtape);
+            shortcutintent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
+            shortcutintent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, new Intent(getApplicationContext(), HistoryActivity.class));
+            sendBroadcast(shortcutintent);
+            hasCreatedIcon = true;
+            savehasCreatedIcon();
+        }
+    }
+
+    public void savehasCreatedIcon() {
+        SharedPreferences preferences = getSharedPreferences(SoundtapeApplication.PREFS_NAME, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(SoundtapeApplication.PREFS_HASCREATEDICON, hasCreatedIcon);
+        editor.commit();
+    }
+
+    public void loadhasCreatedIcon() {
+        SharedPreferences preferences = getSharedPreferences(SoundtapeApplication.PREFS_NAME, 0);
+        hasCreatedIcon = preferences.getBoolean(SoundtapeApplication.PREFS_HASCREATEDICON, false);
 
     }
 
