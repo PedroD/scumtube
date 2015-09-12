@@ -11,14 +11,32 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"/>
 
-    <TextView
+    <RelativeLayout
         android:id="@+id/history_empty"
-        android:text="@string/history_empty"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:gravity="center"
-        android:textColor="@android:color/white"
-        />
+        >
+        <TextView
+            android:id="@+id/history_empty_textview"
+            android:text="@string/history_empty"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            />
+        <Button
+            android:id="@+id/history_empty_button_tutorial"
+            android:text="@string/how_to_use"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:layout_below="@id/history_empty_textview"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"/>
+
+    </RelativeLayout>
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
@@ -27,7 +45,7 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         ads:adSize="BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id">
+        ads:adUnitId="@string/admob_music_history">
     </com.google.android.gms.ads.AdView>
 
 

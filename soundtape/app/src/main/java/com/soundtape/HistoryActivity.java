@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -41,6 +42,15 @@ public class HistoryActivity extends AbstractActivity {
         //AdRequest adRequest = new AdRequest.Builder().addTestDevice("FBD081B873EF81E508FD90B2FEDC613A").addTestDevice("8466E20A350086795264CE662B18DC59").addTestDevice("58B2FFDEEAA2B8B16A6A3969DCEB6570").build(); //TODO remove addTestDevice for production
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+
+        Button tutorialBtn = (Button) findViewById(R.id.history_empty_button_tutorial);
+        tutorialBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HistoryActivity.this, TutorialActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -71,6 +81,9 @@ public class HistoryActivity extends AbstractActivity {
                         }).create().show();
                 ;
                 return true;
+            case R.id.history_menu_settings:
+                Intent intent = new Intent(HistoryActivity.this, SettingsActivity.class);
+                startActivity(intent);
             default:
                 return super.onOptionsItemSelected(item);
         }

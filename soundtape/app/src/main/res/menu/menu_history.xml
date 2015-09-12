@@ -4,4 +4,9 @@
           android:title="@string/history_menu_delete_all"
           android:showAsAction="always"
           />
+    <item android:id="@+id/history_menu_settings"
+          android:icon="@drawable/settings"
+          android:title="@string/history_menu_settings"
+          android:showAsAction="always"
+        />
 </menu>

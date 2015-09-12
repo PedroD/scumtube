@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -391,6 +392,13 @@ public class DownloadService extends AbstractService {
                 input.close();
                 MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
                 m.setFilePath(filePath);
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + directoryPath)));
+                } else {
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + directoryPath)));
+                }
+
                 Logger.i(SoundtapeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);
             } catch (IOException e) {
                 e.printStackTrace();

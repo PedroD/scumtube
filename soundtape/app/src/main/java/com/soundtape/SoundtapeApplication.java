@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class SoundtapeApplication extends Application {
 
-    public static final String APP_NAME = "soundtape";
+    public static final String APP_NAME = "SoundTape";
     public static final String TAG = "soundtapeLog";
     public static final String _T = "57eeec0a6974ecb4e9fcf68fab052f7b";
 

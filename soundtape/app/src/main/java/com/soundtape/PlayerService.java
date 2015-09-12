@@ -283,9 +283,6 @@ public class PlayerService extends AbstractService {
 
     public void mode() {
         if (mode.equals(MODE_NORMAL)) {
-            if(type.equals(TYPE_PLAYLIST)) {
-                playlist.setShuffle(false);
-            }
             mediaPlayer.setLooping(true);
             mode = MODE_LOOPONE;
         } else if (mode.equals(MODE_LOOPONE)) {
@@ -296,9 +293,12 @@ public class PlayerService extends AbstractService {
                 mode = MODE_NORMAL;
             }
         } else if (mode.equals(MODE_LOOPALL)) {
+            playlist.setShuffle(true);
             mode = MODE_SHUFFLE;
         } else if (mode.equals(MODE_SHUFFLE)) {
-            playlist.setShuffle(true);
+            if(type.equals(TYPE_PLAYLIST)) {
+                playlist.setShuffle(false);
+            }
             mode = MODE_NORMAL;
         }
         drawMode();
