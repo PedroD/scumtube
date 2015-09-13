@@ -1,6 +1,8 @@
 package com.soundtape;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.os.Environment;
 import android.widget.RemoteViews;
 
 import java.io.UnsupportedEncodingException;
@@ -17,11 +19,12 @@ public class SoundtapeApplication extends Application {
     public static final String PREFS_MODE_MUSIC = "mode_music";
     public static final String PREFS_MODE_PLAYLIST = "mode_playlist";
     public static final String PREFS_MUSICLIST = "MusicList";
-    public static final String PREFS_HASCREATEDICON = "hasCreatedIcon";
-
+    public static final String PREFS_DOWNLOAD_DIRECTORY = "downloadDirectory";
 
     public static final String TYPE_PLAYLIST = "playlist";
     public static final String TYPE_MUSIC = "music";
+
+    public static String downloadDirectory;
 
     public static RemoteViews mSmallNotificationView;
     public static RemoteViews mLargeNotificationView;
@@ -34,10 +37,8 @@ public class SoundtapeApplication extends Application {
         super.onCreate();
         final Thread.UncaughtExceptionHandler androidDefaultUEH = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionReporter(androidDefaultUEH));
-
+        loadDownloadDirectory();
         mSmallLoadingNotificationView = new RemoteViews(getPackageName(), R.layout.notification_loading);
-
-
     }
 
     public static String md5(String string) {
@@ -68,6 +69,11 @@ public class SoundtapeApplication extends Application {
         //http://www.youtube.com/playlist?list=PLiAXHITvMgI_wAyCqda0LQXPRpAYOEd0Y
         String[] splittedUrl = url.split("list=");
         return splittedUrl[1]; //splittedUrl[3] is the id of the video
+    }
+
+    private void loadDownloadDirectory() {
+        SharedPreferences preferences = getSharedPreferences(SoundtapeApplication.PREFS_NAME, 0);
+        downloadDirectory = preferences.getString(SoundtapeApplication.PREFS_DOWNLOAD_DIRECTORY, Environment.getExternalStorageDirectory() + "/soundtape/");
     }
 
 }

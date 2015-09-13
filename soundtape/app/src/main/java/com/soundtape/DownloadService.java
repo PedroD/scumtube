@@ -340,7 +340,7 @@ public class DownloadService extends AbstractService {
 
                 // download the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                String directoryPath = Environment.getExternalStorageDirectory() + "/soundtape/";
+                String directoryPath = SoundtapeApplication.downloadDirectory;
                 File directory = new File(directoryPath);
                 if (!directory.exists()) {
                     directory.mkdir();
@@ -438,6 +438,7 @@ public class DownloadService extends AbstractService {
             }
         }
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {

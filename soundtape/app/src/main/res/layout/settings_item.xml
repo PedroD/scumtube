@@ -9,6 +9,7 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:gravity="center_vertical"
+        android:paddingLeft="16dip"
         android:textSize="18sp"
         android:textColor="@color/primary_textcolor_inverted"
         />

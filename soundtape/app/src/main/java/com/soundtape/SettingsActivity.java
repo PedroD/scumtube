@@ -1,6 +1,7 @@
 package com.soundtape;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,11 +35,35 @@ public class SettingsActivity extends AbstractActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (settingsArrayList.get(position)) {
                     case DOWNLOAD_DESTINATION:
+                        // Create DirectoryChooserDialog and register a callback
+                        DirectoryChooserDialog directoryChooserDialog =
+                                new DirectoryChooserDialog(SettingsActivity.this,
+                                        new DirectoryChooserDialog.ChosenDirectoryListener()
+                                        {
+                                            @Override
+                                            public void onChosenDir(String chosenDir)
+                                            {
+                                                SoundtapeApplication.downloadDirectory = chosenDir;
+                                                saveDownloadDirectory();
+                                            }
+                                        });
+                        // Toggle new folder button enabling
+                        directoryChooserDialog.setNewFolderEnabled(true);
+                        // Load directory chooser dialog for initial 'm_chosenDir' directory.
+                        // The registered callback will be called upon final directory selection.
+                        directoryChooserDialog.chooseDirectory(SoundtapeApplication.downloadDirectory);
                 }
             }
         });
 
         listView.setAdapter(adapter);
+    }
+
+    private void saveDownloadDirectory() {
+        SharedPreferences preferences = getSharedPreferences(SoundtapeApplication.PREFS_NAME, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(SoundtapeApplication.PREFS_DOWNLOAD_DIRECTORY, SoundtapeApplication.downloadDirectory);
+        editor.commit();
     }
 
     private class SettingsArrayAdapter extends ArrayAdapter<String> {
