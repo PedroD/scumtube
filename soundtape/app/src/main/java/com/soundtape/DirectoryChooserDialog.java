@@ -4,19 +4,17 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
-import android.content.DialogInterface.OnKeyListener;
 import android.os.Environment;
 import android.text.Editable;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -125,7 +123,7 @@ public class DirectoryChooserDialog {
 
         final AlertDialog dirsDialog = dialogBuilder.create();
 
-        dirsDialog.setOnKeyListener(new OnKeyListener() {
+        /*dirsDialog.setOnKeyListener(new OnKeyListener() {
             @Override
             public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -144,7 +142,7 @@ public class DirectoryChooserDialog {
                     return false;
                 }
             }
-        });
+        });*/
 
         // Show directory chooser dialog
         dirsDialog.show();
@@ -192,26 +190,54 @@ public class DirectoryChooserDialog {
         // Create custom view for AlertDialog title containing
         // current directory TextView and possible 'New folder' button.
         // Current directory TextView allows long directory path to be wrapped to multiple lines.
-        LinearLayout titleLayout = new LinearLayout(m_context);
-        titleLayout.setOrientation(LinearLayout.VERTICAL);
+        RelativeLayout titleLayout = new RelativeLayout(m_context);
 
         m_titleView = new TextView(m_context);
-        m_titleView.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+        RelativeLayout.LayoutParams titleViewLp = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+        titleViewLp.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        m_titleView.setId(1);
+        m_titleView.setLayoutParams(titleViewLp);
         m_titleView.setTextAppearance(m_context, android.R.style.TextAppearance_Large);
         m_titleView.setTextColor(m_context.getResources().getColor(android.R.color.white));
         m_titleView.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
         m_titleView.setText(title);
 
+        Button newUpButton = new Button(m_context);
+        RelativeLayout.LayoutParams newUpButtonLp = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        newUpButtonLp.addRule(RelativeLayout.BELOW, m_titleView.getId());
+        newUpButton.setId(2);
+        newUpButton.setLayoutParams(newUpButtonLp);
+        newUpButton.setTextColor(m_context.getResources().getColor(android.R.color.white));
+        newUpButton.setText("Up");
+        newUpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (m_dir.equals(m_sdcardDirectory)) {
+                    // The very top level directory, do nothing
+                } else {
+                    // Navigate back to an upper directory
+                    m_dir = new File(m_dir).getParent();
+                    updateDirectory();
+                }
+            }
+        });
+
         Button newDirButton = new Button(m_context);
-        newDirButton.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
+        RelativeLayout.LayoutParams newDirButtonLp = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        newDirButtonLp.addRule(RelativeLayout.BELOW, m_titleView.getId());
+        newDirButtonLp.addRule(RelativeLayout.RIGHT_OF, newUpButton.getId());
+        newDirButton.setId(3);
+        newDirButton.setLayoutParams(newDirButtonLp);
+        newDirButton.setTextColor(m_context.getResources().getColor(android.R.color.white));
         newDirButton.setText("New folder");
         newDirButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 final EditText input = new EditText(m_context);
+                input.setTextColor(m_context.getResources().getColor(android.R.color.white));
 
                 // Show new folder name input dialog
-                new AlertDialog.Builder(m_context).
+                new AlertDialog.Builder(new ContextThemeWrapper(m_context, android.R.style.Theme_Holo_Dialog)).
                         setTitle("New folder name").
                         setView(input).setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
@@ -237,6 +263,7 @@ public class DirectoryChooserDialog {
         }
 
         titleLayout.addView(m_titleView);
+        titleLayout.addView(newUpButton);
         titleLayout.addView(newDirButton);
 
         dialogBuilder.setCustomTitle(titleLayout);
@@ -244,7 +271,6 @@ public class DirectoryChooserDialog {
         m_listAdapter = createListAdapter(listItems);
 
         dialogBuilder.setSingleChoiceItems(m_listAdapter, -1, onClickListener);
-        dialogBuilder.setCancelable(false);
 
         return dialogBuilder;
     }
