@@ -22,6 +22,8 @@ import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 import java.util.ArrayList;
 
@@ -32,9 +34,15 @@ public class HistoryActivity extends AbstractActivity {
     public static boolean hasView = false;
     private static ArrayList<Music> musicArrayList;
 
+    private Tracker mTracker;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mTracker = ((SoundtapeApplication)getApplication()).getDefaultTracker();
+        mTracker.setScreenName("HistoryActivity");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
 
         setContentView(R.layout.activity_history);
 
@@ -115,6 +123,10 @@ public class HistoryActivity extends AbstractActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Play")
+                        .setAction("Music")
+                        .build());
                 final Intent playerService = new Intent(getApplicationContext(), PlayerService.class);
                 playerService.putExtra("ytUrl", musicArrayList.get(position).getYtUrl());
                 playerService.putExtra("type", SoundtapeApplication.TYPE_MUSIC);

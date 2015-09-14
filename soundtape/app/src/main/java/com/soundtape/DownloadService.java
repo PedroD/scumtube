@@ -12,6 +12,9 @@ import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.widget.RemoteViews;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +35,8 @@ public class DownloadService extends AbstractService {
     private ArrayList<MusicDownloading> musicDownloadingArrayList = new ArrayList<MusicDownloading>();
     private CheckProgress checkProgress;
     private boolean externalStorageWriteable = false;
+
+    private Tracker mTracker;
 
     public DownloadService() {
         checkProgress = new CheckProgress();
@@ -80,6 +85,9 @@ public class DownloadService extends AbstractService {
             showToast("Can't write on the external storage.");
         } else if (ytUrl != null) {
             if (!isAlreadyBeingDownloaded(ytUrl)) {
+                mTracker = ((SoundtapeApplication)getApplication()).getDefaultTracker();
+                mTracker.setScreenName("DownloadService");
+                mTracker.send(new HitBuilders.ScreenViewBuilder().build());
                 showToast("The download will start shortly.");
                 final MusicDownloading m = new MusicDownloading(ytUrl, currentNotificationId);
                 m.start();
@@ -391,12 +399,13 @@ public class DownloadService extends AbstractService {
                 output.close();
                 input.close();
                 MusicDownloading m = getMusicDownloadingByNotificationId(notificationId);
+                showToast("Finished download to " + filePath);
                 m.setFilePath(filePath);
 
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                     sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + directoryPath)));
                 } else {
-                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + directoryPath)));
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + filePath)));
                 }
 
                 Logger.i(SoundtapeApplication.TAG, "Finished the download thread of: " + titleEscaped + " :: " + mp3Url + " :: " + notificationId);

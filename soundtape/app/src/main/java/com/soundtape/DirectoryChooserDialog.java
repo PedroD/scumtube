@@ -102,7 +102,7 @@ public class DirectoryChooserDialog {
         class DirectoryOnClickListener implements DialogInterface.OnClickListener {
             public void onClick(DialogInterface dialog, int item) {
                 // Navigate into the sub-directory
-                m_dir += "/" + ((AlertDialog) dialog).getListView().getAdapter().getItem(item) + "/";
+                m_dir += "/" + ((AlertDialog) dialog).getListView().getAdapter().getItem(item);
                 updateDirectory();
             }
         }
@@ -122,27 +122,6 @@ public class DirectoryChooserDialog {
         }).setNegativeButton("Cancel", null);
 
         final AlertDialog dirsDialog = dialogBuilder.create();
-
-        /*dirsDialog.setOnKeyListener(new OnKeyListener() {
-            @Override
-            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
-                if (keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
-                    // Back button pressed
-                    if (m_dir.equals(m_sdcardDirectory)) {
-                        // The very top level directory, do nothing
-                        return false;
-                    } else {
-                        // Navigate back to an upper directory
-                        m_dir = new File(m_dir).getParent();
-                        updateDirectory();
-                    }
-
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        });*/
 
         // Show directory chooser dialog
         dirsDialog.show();

@@ -5,6 +5,9 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 import android.widget.RemoteViews;
 
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.Tracker;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,6 +32,8 @@ public class SoundtapeApplication extends Application {
     public static RemoteViews mSmallNotificationView;
     public static RemoteViews mLargeNotificationView;
     public static RemoteViews mSmallLoadingNotificationView;
+
+    private Tracker mTracker;
 
     private boolean hasCreatedIcon;
 
@@ -74,6 +79,15 @@ public class SoundtapeApplication extends Application {
     private void loadDownloadDirectory() {
         SharedPreferences preferences = getSharedPreferences(SoundtapeApplication.PREFS_NAME, 0);
         downloadDirectory = preferences.getString(SoundtapeApplication.PREFS_DOWNLOAD_DIRECTORY, Environment.getExternalStorageDirectory() + "/soundtape/");
+    }
+
+    synchronized public Tracker getDefaultTracker() {
+        if (mTracker == null) {
+            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
+            mTracker = analytics.newTracker(R.xml.global_tracker);
+        }
+        return mTracker;
     }
 
 }

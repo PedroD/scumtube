@@ -11,17 +11,25 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+
 import java.util.ArrayList;
 
 public class SettingsActivity extends AbstractActivity {
 
     private final String DOWNLOAD_DESTINATION = "Change download destination";
     private ArrayList<String> settingsArrayList = new ArrayList();
+    private Tracker mTracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        mTracker = ((SoundtapeApplication)getApplication()).getDefaultTracker();
+        mTracker.setScreenName("SettingsActivity");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
 
         settingsArrayList.add(DOWNLOAD_DESTINATION);
 
@@ -43,7 +51,11 @@ public class SettingsActivity extends AbstractActivity {
                                             @Override
                                             public void onChosenDir(String chosenDir)
                                             {
-                                                SoundtapeApplication.downloadDirectory = chosenDir;
+                                                mTracker.send(new HitBuilders.EventBuilder()
+                                                        .setCategory("Settings")
+                                                        .setAction("Path")
+                                                        .build());
+                                                SoundtapeApplication.downloadDirectory = chosenDir + "/";
                                                 saveDownloadDirectory();
                                             }
                                         });

@@ -20,6 +20,9 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -66,6 +69,7 @@ public class PlayerService extends AbstractService {
     private Object canExitLock = new ReentrantLock();
     private Object canUpdateMusicList = new ReentrantLock();
     private String mode = MODE_NORMAL;
+    private Tracker mTracker;
 
     public PlayerService() {
     }
@@ -74,6 +78,9 @@ public class PlayerService extends AbstractService {
     public void onCreate() {
         Logger.i(SoundtapeApplication.TAG, "On create invoked.");
         super.onCreate();
+        mTracker = ((SoundtapeApplication)getApplication()).getDefaultTracker();
+        mTracker.setScreenName("PlayerService");
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
 
         // Initialize PhoneCallListener
         TelephonyManager telephonyManager =
@@ -321,6 +328,10 @@ public class PlayerService extends AbstractService {
     }
 
     public void download() {
+        mTracker.send(new HitBuilders.EventBuilder()
+                .setCategory("Download")
+                .setAction("Music")
+                .build());
         final Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         getApplicationContext().sendBroadcast(it);
         final Intent downloadIntent = new Intent(PlayerService.this, DownloadService.class);
